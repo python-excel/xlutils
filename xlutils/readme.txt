@@ -42,8 +42,8 @@ The Utilities
 Each of the utilities in described in its own file found in the 'docs'
 directory of the package: 
 
-*something.txt*
-  short description of file
+*margins.txt*
+  Tools for finding how much of an Excel file contains useful data.
 
 Development and Testing
 =======================

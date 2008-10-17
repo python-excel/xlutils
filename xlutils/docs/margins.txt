@@ -1,0 +1,201 @@
+==========
+margins
+==========
+
+This combined module and script provide information on how much space
+is taken up in an Excel file by cells containing no meaningful data.
+
+The following example shows how it is used as a script::
+
+  python xlsmargins.py [options] *.xls
+
+To get a list of the available options, do the following:
+
+  python xlsmargins.py --help
+
+The module also provides the tools that do the work for the above
+script as helpful functions:
+
+*ispunc(character)*
+
+  This little helper function returns True if called with a punctuation
+  character and False with any other:
+
+  >>> from xlutils.margins import ispunc
+  >>> ispunc('u')
+  False
+  >>> ispunc(',')
+  True
+
+  It also works fine with unicode characters:
+
+  >>> ispunc(u',')
+  True
+  >>> ispunc(u'w')
+  False
+
+  It does not, however, return sensible answers if called with more
+  than one character:
+
+  >>> ispunc(',,,')
+  False
+
+*cells_all_junk(cells,is_rubbish=None)*
+  
+  This function returns True if all the cells supplied are junk:
+
+  >>> from xlutils.margins import cells_all_junk
+  >>> from xlrd.sheet import Cell,empty_cell
+  >>> cells_all_junk([empty_cell,empty_cell,empty_cell])
+  True
+
+  But it returns False as soon as any of the cells supplied are not
+  junk:
+
+  >>> from xlrd import XL_CELL_NUMBER
+  >>> cells_all_junk([empty_cell,Cell(XL_CELL_NUMBER,1),empty_cell])
+  False
+
+  The definition of 'junk' is as follows:
+
+  * Empty cells are junk:
+
+    >>> from xlrd import XL_CELL_EMPTY
+    >>> cells_all_junk([Cell(XL_CELL_EMPTY,'')])
+    True
+
+  * Blank cells are junk:
+
+    >>> from xlrd import XL_CELL_BLANK
+    >>> cells_all_junk([Cell(XL_CELL_BLANK,'')])
+    True
+
+  * Number cells containing zero are considered junk:
+
+    >>> from xlrd import XL_CELL_NUMBER
+    >>> cells_all_junk([Cell(XL_CELL_NUMBER,0)])
+    True
+
+    However, if a number cell contains anything else, it's not junk:
+
+    >>> cells_all_junk([Cell(XL_CELL_NUMBER,1)])
+    False
+
+  * Text cells are junk if they don't contain anything:
+
+    >>> from xlrd import XL_CELL_TEXT
+    >>> cells_all_junk([Cell(XL_CELL_TEXT,'')])
+    True
+  
+    or if they contain only space characters:
+
+    >>> cells_all_junk([Cell(XL_CELL_TEXT,' \t\n\r')])
+    True
+
+    otherwise they aren't considered junk:
+
+    >>> cells_all_junk([Cell(XL_CELL_TEXT,'not junk')])
+    False
+
+    However, you can also pass a checker function such as this one:
+
+    >>> def isrubbish(value): return value=='rubbish'
+
+    Which can then be used to check for junk conditions of your own
+    choice: 
+
+    >>> cells_all_junk([Cell(XL_CELL_TEXT,'rubbish')],isrubbish)
+    True
+    >>> cells_all_junk([Cell(XL_CELL_TEXT,'not rubbish')],isrubbish)
+    False
+
+  * Date, boolean, and error fields are all not considered to be blank:
+
+    >>> from xlrd import XL_CELL_DATE, XL_CELL_BOOLEAN, XL_CELL_ERROR
+    >>> cells_all_junk([Cell(XL_CELL_DATE,'')])
+    False
+    >>> cells_all_junk([Cell(XL_CELL_BOOLEAN,'')])
+    False
+    >>> cells_all_junk([Cell(XL_CELL_ERROR,'')])
+    False
+
+  Be careful though as if you call cells_all_junk with an empty
+  sequence of cells, you'll get True:
+
+  >>> cells_all_junk([])
+  True
+
+*number_of_good_rows(sheet, checker=None,nrows=None,ncols=None)*
+
+  This function returns the number of rows in a sheet that contain
+  anything other than junk, as defined by the cells_all_junk
+  function. 
+
+  For example:
+
+  >>> from xlutils.tests.fixtures import make_sheet
+  >>> sheet = make_sheet((
+  ...           ('X',' ',' ',' ',' '),
+  ...           (' ',' ',' ','X',' '),
+  ...           (' ',' ',' ',' ',' '),
+  ...           ('X',' ',' ',' ',' '),
+  ...           (' ',' ','X',' ',' '),
+  ...           (' ',' ',' ',' ',' '),
+  ...           ))
+  >>> from xlutils.margins import number_of_good_rows
+  >>> number_of_good_rows(sheet)
+  5
+
+  You can limit the area searched using the nrows and ncols
+  parameters: 
+
+  >>> number_of_good_rows(sheet,nrows=3)
+  2
+  >>> number_of_good_rows(sheet,ncols=2)
+  4
+  >>> number_of_good_rows(sheet,ncols=3,nrows=3)
+  1
+
+  You can also pass a checking function through to the cells_all_junk
+  calls:
+
+  >>> number_of_good_rows(sheet,checker=lambda c:c=='X')
+  0
+
+
+*number_of_good_cols(sheet, checker=None,nrows=None,ncols=None)*
+
+  This function returns the number of columns in a sheet that contain
+  anything other than junk, as defined by the cells_all_junk function.
+
+  For example:
+
+  >>> sheet = make_sheet((
+  ...           ('X',' ',' ','X',' ',' '),
+  ...           (' ',' ',' ',' ',' ',' '),
+  ...           (' ',' ',' ',' ','X',' '),
+  ...           (' ','X',' ',' ',' ',' '),
+  ...           (' ',' ',' ',' ',' ',' '),
+  ...           (' ',' ',' ',' ',' ',' '),
+  ...           ))
+  >>> from xlutils.margins import number_of_good_cols
+  >>> number_of_good_cols(sheet)
+  5
+
+  You can limit the area searched using the nrows and ncols
+  parameters: 
+
+  >>> number_of_good_cols(sheet,nrows=2)
+  4
+  >>> number_of_good_cols(sheet,ncols=2)
+  2
+  >>> number_of_good_cols(sheet,ncols=3,nrows=3)
+  1
+
+  You can also pass a checking function through to the cells_all_junk
+  calls:
+
+  >>> number_of_good_cols(sheet,checker=lambda c:c=='X')
+  0
+
+
