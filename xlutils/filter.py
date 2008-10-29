@@ -150,3 +150,7 @@ class MethodFilter:
     def __getattr__(self,name):
         pass
         
+def process(reader,*chain):
+    for i in range(len(chain)-1):
+        chain[i].next = chain[i+1]
+    reader(chain[0])

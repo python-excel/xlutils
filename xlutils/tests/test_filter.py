@@ -5,7 +5,7 @@
 # See license.txt for more details.
 
 from unittest import TestSuite,TestCase,makeSuite
-from xlutils.filter import BaseReader
+from xlutils.filter import BaseReader,process
 from xlutils.tests.fixtures import test_files,make_book
 
 import os
@@ -204,9 +204,24 @@ class TestMethodFilter(TestCase):
             ('finish',())
             ])
 
+class TestProcess(TestCase):
+
+    def test_setup(self):
+        class DummyReader:
+            def __call__(self,filter):
+                filter.finished()
+        F1 = TestFilter()
+        F2 = TestFilter()
+        process(DummyReader(),F1,F2)
+        self.failUnless(F1.next is F2)
+        self.failUnless(isinstance(F2.next,TestFilterMethod))
+        F1.compare(self,[('finished',())])
+        F2.compare(self,())
+    
 def test_suite():
     return TestSuite((
         makeSuite(TestBaseReader),
         makeSuite(TestBaseFilter),
         # makeSuite(TestMethodFilter),
+        makeSuite(TestProcess),
         ))
