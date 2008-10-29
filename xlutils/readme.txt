@@ -45,6 +45,10 @@ directory of the package:
 *margins.txt*
   Tools for finding how much of an Excel file contains useful data.
 
+*filter.txt*
+  A mini framework for splitting and filtering Excel files into new
+  Excel files.
+
 Development and Testing
 =======================
 

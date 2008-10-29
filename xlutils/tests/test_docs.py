@@ -13,7 +13,5 @@ def test_suite():
     return unittest.TestSuite((
         DocFileSuite('../readme.txt', optionflags=options),
         DocFileSuite('../docs/margins.txt',optionflags=options),
+        DocFileSuite('../docs/filter.txt',optionflags=options),
         ))
-
-if __name__ == '__main__':
-    unittest.main(default='test_suite')

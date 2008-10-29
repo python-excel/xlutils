@@ -1,0 +1,95 @@
+======
+filter
+======
+
+This framework is designed to filter and split Excel files using a
+series of modular readers, filters, and writers. These components are
+described below, followed by documentation for the currently available
+readers, filters and writers. Right an the bottom is an example usage
+of the filter framework to split a sample excel file.
+
+Readers
+=======
+
+Readers are components that get data from a source and parse it into a
+series of xlrd.Book objects before making calls to the appropriate
+methods on the first filter in the chain. 
+
+Because it is usually only the source of the data to be processed that
+changes, a handy base class is provided for readers.
+
+Here's an example reader that uses this base class to process the file
+it is initialised with, but twice:
+
+>>> import os.path
+>>> from xlrd import open_workbook
+>>> from xlutils.filter import BaseReader
+>>> class MyReader(BaseReader):
+...
+...    def __init__(self,filename):
+...       self.filename = filename
+...
+...    def get_filepaths(self):
+...       path = os.path.join(test_files,self.filename)
+...       return (path,path,)
+
+If you need to create a more unorthodox reader, such as one that reads
+its data from a network socket or that needs to pass special
+parameters to xlrd.open_workbook then read the implementation of
+xlutils.filter.BaseReader
+
+Filters
+=======
+
+Filters are the important bits of this framework. They are build up in
+chains to achieve the results required for a particular task. A filter
+must define certain methods, the full set of these is shown in the
+example below. The implementation of these methods can do whatever the
+filter requires, but generally they end up calling the appropriate
+methods on the next filter. 
+
+Here's an example filter that does nothing but print messages when its
+methods are called and then call the next filter in the chain:
+
+>>> class MyFilter:
+...
+...    def __init__(self,name):
+...        self.name = name
+... 
+...    def workbook(self,rdbook,wtbook_name):
+...        print self.name,'workbook',rdbook,wtbook_name
+...        self.next.workbook(rdbook,wtbook_name)
+...    
+...    def sheet(self,rdsheet,wtsheet_name):
+...        print self.name,'sheet',rdsheet,wtsheet_name
+...        self.next.sheet(rdsheet,wtsheet_name)
+...        
+...    def row(self,rdrowx,wtrowx):
+...        print self.name,'row',rdrowx,wtrowx
+...        self.next.row(rdrowx,wtrowx)
+...
+...    def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
+...        print self.name,'cell',rdrowx,rdcolx,wtrowx,wtcolx
+...        self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+...
+...    def finish(self):
+...        print 'finish'
+...        pass
+
+For full details of when each of these methods are called, see the
+docstrings of the xlutils.filter.BaseFilter
+
+Writers
+=======
+
+Available Readers
+=================
+
+Available Writers
+=================
+
+Available Filters
+=================
+
+Example Usage
+=============
