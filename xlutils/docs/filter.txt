@@ -6,7 +6,7 @@ This framework is designed to filter and split Excel files using a
 series of modular readers, filters, and writers. These components are
 described below, followed by documentation for the currently available
 readers, filters and writers. Right an the bottom is an example usage
-of the filter framework to split a sample excel file.
+of the filter framework.
 
 Readers
 =======
@@ -84,6 +84,23 @@ Writers
 
 Available Readers
 =================
+
+  GlobReader
+  ----------------
+
+  If you're processing files that are on disk, then this is probably
+  the reader for you. It returns all files matching the path
+  specification it's created with. Here's an example:
+
+  >>> from xlutils.filter import GlobReader
+  >>> r = GlobReader(os.path.join(test_files,'*.xls'))
+  >>> [p[len(test_files)+1:] for p in r.get_filepaths()]
+  ['test.xls']
+
+  All the other functionality is provided by BaseReader:
+
+  >>> isinstance(r,BaseReader)
+  True
 
 Available Writers
 =================

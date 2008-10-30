@@ -7,6 +7,8 @@
 import os
 import xlrd
 
+from glob import glob
+
 class BaseReader:
 
     def get_filepaths(self):
@@ -130,6 +132,14 @@ class BaseFilter:
         any methods.
         """
         self.next.finish()
+
+class GlobReader(BaseReader):
+
+    def __init__(self,spec):
+        self.spec = spec
+        
+    def get_filepaths(self):
+        return glob(self.spec)
 
 class MethodFilter:
     """

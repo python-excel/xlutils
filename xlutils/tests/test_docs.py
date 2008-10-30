@@ -5,13 +5,17 @@
 # See license.txt for more details.
 
 import unittest
+from fixtures import test_files
 from zope.testing.doctest import DocFileSuite, REPORT_NDIFF,ELLIPSIS
 
 options = REPORT_NDIFF|ELLIPSIS
+
+def setUp(test):
+    test.globs['test_files']=test_files
 
 def test_suite():
     return unittest.TestSuite((
         DocFileSuite('../readme.txt', optionflags=options),
         DocFileSuite('../docs/margins.txt',optionflags=options),
-        DocFileSuite('../docs/filter.txt',optionflags=options),
+        DocFileSuite('../docs/filter.txt',optionflags=options,setUp=setUp),
         ))
