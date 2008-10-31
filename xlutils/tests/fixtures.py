@@ -12,6 +12,8 @@ from xlrd.sheet import Sheet
 
 test_files = os.path.join(os.path.dirname(__file__))
 
+test_xls_path = os.path.join(test_files,'test.xls')
+
 class DummyBook:
 
     biff_version = 80

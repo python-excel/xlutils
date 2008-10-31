@@ -21,7 +21,7 @@ changes, a handy base class is provided for readers.
 Here's an example reader that uses this base class to process the file
 it is initialised with, but twice:
 
->>> import os.path
+>>> import os
 >>> from xlrd import open_workbook
 >>> from xlutils.filter import BaseReader
 >>> class MyReader(BaseReader):
@@ -82,6 +82,28 @@ docstrings of the xlutils.filter.BaseFilter
 Writers
 =======
 
+Writers are components that get handle calls from the appropriate
+methods on the last filter in the chain. It is the writer that
+actually does the work of copying all the information from the
+appropriate sources and writing them to the output files.
+
+Because there is a lot of work involved in this and it is only usually
+the method of writing the binary data to its destination that differs,
+a handy base class is provided for writers.
+
+Here's an example writer that just writes the data to a temporary
+directory:
+
+>>> from xlutils.filter import BaseWriter
+>>> from tempfile import mkdtemp
+>>> class MyWriter(BaseWriter):
+...
+...    def __init__(self):
+...       self.tempdir = mkdtemp()
+...
+...    def get_stream(self,filename):
+...       return open(os.path.join(self.tempdir,filename),'wb')
+
 Available Readers
 =================
 
@@ -95,7 +117,7 @@ Available Readers
   >>> from xlutils.filter import GlobReader
   >>> r = GlobReader(os.path.join(test_files,'*.xls'))
   >>> [p[len(test_files)+1:] for p in r.get_filepaths()]
-  ['test.xls']
+  ['test.xls', 'testall.xls']
 
   All the other functionality is provided by BaseReader:
 
@@ -104,6 +126,30 @@ Available Readers
 
 Available Writers
 =================
+
+  DirectoryWriter
+  ----------------
+
+  If you're processing files that are on disk, then this is probably
+  the writer for you. It stores files in the directory passed to it
+  during creation. Here's an example:
+
+  >>> from xlutils.filter import DirectoryWriter
+  >>> w = DirectoryWriter(temp_dir)
+  >>> os.listdir(temp_dir)
+  []
+  >>> f = w.get_stream('test.xls')
+  >>> f.write('some \r\n data')
+  >>> f.close()
+  >>> os.listdir(temp_dir)
+  ['test.xls']
+  >>> open(os.path.join(temp_dir,'test.xls'),'rb').read()
+  'some \r\n data'
+
+  All the other functionality is provided by BaseWriter:
+
+  >>> isinstance(w,BaseWriter)
+  True
 
 Available Filters
 =================
