@@ -150,6 +150,15 @@ Available Readers
   ('cell', (0, 0, 0, 0))
   ('finish', ())
 
+  NB: This reader cannot be used with any chain that ends in something
+      that subclasses BaseWriter:
+
+  >>> from xlutils.filter import DirectoryWriter
+  >>> r(DirectoryWriter(temp_dir))
+  Traceback (most recent call last):
+  ...
+  AttributeError: DummyBook instance has no attribute 'xf_list'
+
 Available Writers
 =================
 
