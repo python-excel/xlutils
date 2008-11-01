@@ -19,7 +19,7 @@ Because it is usually only the source of the data to be processed that
 changes, a handy base class is provided for readers.
 
 Here's an example reader that uses this base class to process the file
-it is initialised with, but twice:
+it is initialised with:
 
 >>> import os
 >>> from xlrd import open_workbook
@@ -30,8 +30,7 @@ it is initialised with, but twice:
 ...       self.filename = filename
 ...
 ...    def get_filepaths(self):
-...       path = os.path.join(test_files,self.filename)
-...       return (path,path,)
+...       return (os.path.join(test_files,self.filename),)
 
 If you need to create a more unorthodox reader, such as one that reads
 its data from a network socket or that needs to pass special
@@ -73,8 +72,8 @@ methods are called and then call the next filter in the chain:
 ...        self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
 ...
 ...    def finish(self):
-...        print 'finish'
-...        pass
+...        print self.name, 'finish'
+...        self.next.finish()
 
 For full details of when each of these methods are called, see the
 docstrings of the xlutils.filter.BaseFilter
@@ -95,14 +94,10 @@ Here's an example writer that just writes the data to a temporary
 directory:
 
 >>> from xlutils.filter import BaseWriter
->>> from tempfile import mkdtemp
 >>> class MyWriter(BaseWriter):
 ...
-...    def __init__(self):
-...       self.tempdir = mkdtemp()
-...
 ...    def get_stream(self,filename):
-...       return open(os.path.join(self.tempdir,filename),'wb')
+...       return open(os.path.join(temp_dir,filename),'wb')
 
 Available Readers
 =================
@@ -128,7 +123,7 @@ Available Writers
 =================
 
   DirectoryWriter
-  ----------------
+  ---------------
 
   If you're processing files that are on disk, then this is probably
   the writer for you. It stores files in the directory passed to it
@@ -145,6 +140,7 @@ Available Writers
   ['test.xls']
   >>> open(os.path.join(temp_dir,'test.xls'),'rb').read()
   'some \r\n data'
+  >>> os.remove(os.path.join(temp_dir,'test.xls'))
 
   All the other functionality is provided by BaseWriter:
 
@@ -154,5 +150,71 @@ Available Writers
 Available Filters
 =================
 
+  BaseFilter
+  ----------
+
+  This is a "do nothing" filter that makes a great base class for your
+  own filters. All the required methods are implemented such that they
+  just call the same method on the next filter in the chain.
+
 Example Usage
 =============
+
+Here's a simple example that filters out odd numbered rows from an
+original workbook's sheets. It makes use of the components from the
+examples above but needs one more filter:
+
+>>> from xlutils.filter import BaseFilter
+>>> class EvenFilter(BaseFilter):
+...
+...     def row(self,rdrowx,wtrowx):
+...         if not rdrowx%2:
+...             self.next.row(rdrowx,wtrowx)
+...     
+...     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
+...         if not rdrowx%2:
+...             self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+
+Now we can put it all together with a call to the process function:
+
+>>> from xlutils.filter import process
+>>> process(
+...     MyReader('test.xls'),
+...     MyFilter('before'),
+...     EvenFilter(),
+...     MyFilter('after'),
+...     MyWriter()
+...     )
+before workbook <xlrd.Book object at ...> test.xls
+after workbook <xlrd.Book object at ...> test.xls
+before sheet <xlrd.sheet.Sheet object at ...> Sheet1
+after sheet <xlrd.sheet.Sheet object at ...> Sheet1
+before row 0 0
+after row 0 0
+before cell 0 0 0 0
+after cell 0 0 0 0
+before cell 0 1 0 1
+after cell 0 1 0 1
+before row 1 1
+before cell 1 0 1 0
+before cell 1 1 1 1
+before sheet <xlrd.sheet.Sheet object at ...> Sheet2
+after sheet <xlrd.sheet.Sheet object at ...> Sheet2
+before row 0 0
+after row 0 0
+before cell 0 0 0 0
+after cell 0 0 0 0
+before cell 0 1 0 1
+after cell 0 1 0 1
+before row 1 1
+before cell 1 0 1 0
+before cell 1 1 1 1
+before finish
+after finish
+
+As you can see if you've read this far, there's quite a lot of output,
+but it's certainly informative! However, just to be on the safe side,
+we can see that the output file was actually written:
+
+>>> os.listdir(temp_dir)
+['test.xls']
