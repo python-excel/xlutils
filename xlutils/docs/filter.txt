@@ -103,7 +103,7 @@ Available Readers
 =================
 
   GlobReader
-  ----------------
+  ----------
 
   If you're processing files that are on disk, then this is probably
   the reader for you. It returns all files matching the path
@@ -118,6 +118,37 @@ Available Readers
 
   >>> isinstance(r,BaseReader)
   True
+
+  TestReader
+  ----------
+
+  This reader is specifically designed for testing filter
+  implementations with known sets of cells. This example should give a
+  good idea of how to use it and shows the filter created above in
+  use:
+  
+  >>> from xlutils.tests.test_filter import TestReader,TestCallable
+  >>> from xlrd import XL_CELL_NUMBER
+  >>> r = TestReader(
+  ...         ('Sheet1',(('R0C0','R0C1'),
+  ...                    ('R1C0','R1C1'))),
+  ...         ('Sheet2',(((0.0,XL_CELL_NUMBER),),),)
+  ...     )
+  >>> c = TestCallable()
+  >>> r(c)
+  >>> c.print_called()
+  ('workbook', (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'))
+  ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'))
+  ('row', (0, 0))
+  ('cell', (0, 0, 0, 0))
+  ('cell', (0, 1, 0, 1))
+  ('row', (1, 1))
+  ('cell', (1, 0, 1, 0))
+  ('cell', (1, 1, 1, 1))
+  ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet2'))
+  ('row', (0, 0))
+  ('cell', (0, 0, 0, 0))
+  ('finish', ())
 
 Available Writers
 =================

@@ -6,9 +6,9 @@
 
 from tempfile import TemporaryFile
 from unittest import TestSuite,TestCase,makeSuite
-from xlrd import open_workbook
+from xlrd import open_workbook,XL_CELL_NUMBER
 from xlutils.filter import BaseReader,GlobReader,BaseWriter,process
-from xlutils.tests.fixtures import test_files,test_xls_path,make_book,compare
+from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,compare,DummyBook
 
 import os
 
@@ -41,7 +41,33 @@ class TestCallable:
         return TestCallableMethod(self,name)
     def compare(self,tc,expected):
         compare(tc,self.called,expected)
+    def print_called(self):
+        for e in self.called:
+            print e
+    def __repr__(self):
+        return '<TestCallable>'
     
+class TestReader(BaseReader):
+
+    def __init__(self,*sheets):
+        self.book = DummyBook()
+        index = 0
+        for name,rows in sheets:
+            make_sheet(rows,self.book,name,index)
+            index+=1
+            
+    def get_workbooks(self):
+        yield self.book,'test.xls'
+
+class TestTestReader(TestCase):
+
+    def test_cell_type(self):
+        r = TestReader(('Sheet1',(((0.0,XL_CELL_NUMBER),),)))
+        book = tuple(r.get_workbooks())[0][0]
+        cell = book.sheet_by_index(0).cell(0,0)
+        self.assertEqual(cell.value,0.0)
+        self.assertEqual(cell.ctype,XL_CELL_NUMBER)
+        
 class TestBaseReader(TestCase):
 
     def test_no_implementation(self):
@@ -462,6 +488,7 @@ class TestProcess(TestCase):
 def test_suite():
     return TestSuite((
         makeSuite(TestBaseReader),
+        makeSuite(TestTestReader),
         makeSuite(TestBaseFilter),
         # makeSuite(TestMethodFilter),
         makeSuite(TestBaseWriter),

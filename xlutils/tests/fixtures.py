@@ -22,7 +22,7 @@ class DummyBook:
     verbosity = 0
     formatting_info = 0
     _xf_index_to_xl_type_map = {}
-    _sheet_visibility = [0] # one sheet, visible
+    _sheet_visibility = []
 
     def __init__(self):
         self.__sheets = []
@@ -36,21 +36,27 @@ class DummyBook:
 
     def sheet_by_index(self,i):
         return self.__sheets[i]
-
+        
 def make_book(rows):
     book = DummyBook()
     sheet = make_sheet(rows,book=book)
-    book.add(sheet)
     return book
 
-def make_sheet(rows,cell_type=XL_CELL_TEXT,book=None):
+def make_sheet(rows,book=None,name='test sheet',number=0):
     if book is None:
         book = DummyBook()
-    sheet = Sheet(book,0,'test sheet',0)
+    book._sheet_visibility.append(0)
+    sheet = Sheet(book,0,name,number)
+    book.add(sheet)
     for rowx in range(len(rows)):
         row = rows[rowx]
         for colx in range(len(row)):
-            sheet.put_cell(rowx,colx,cell_type,row[colx],None)
+            value = row[colx]
+            if isinstance(value,tuple):
+                value,cell_type = value
+            else:
+                cell_type=XL_CELL_TEXT
+            sheet.put_cell(rowx,colx,cell_type,value,None)
     return sheet
 
 def compare(tc,actual,expected,cmp=cmp,repr=repr):
