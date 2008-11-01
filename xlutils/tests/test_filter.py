@@ -7,46 +7,12 @@
 from tempfile import TemporaryFile
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER
-from xlutils.filter import BaseReader,GlobReader,BaseWriter,process
-from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,compare,DummyBook
+from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process
+from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
+from xlutils.tests.fixtures import compare,O,TestCallable,TestCallableMethod,TestTraversable
 
 import os
 
-class O:
-    """
-    A proxy for use in expected values to indicate that
-    only the class of the object is important.
-    """
-    def __init__(self,class_name):
-        self.class_name = class_name
-    def __cmp__(self,other):
-        c = other.__class__
-        return cmp(
-            self.class_name,
-            c.__module__+'.'+c.__name__
-            )
-    def __repr__(self):
-        return '<O:%s>'%self.class_name
-
-class TestCallableMethod:
-    def __init__(self,tf,name):
-        self.tf,self.name = tf,name
-    def __call__(self,*args):
-        self.tf.called.append((self.name,tuple(args)))
-
-class TestCallable:
-    def __init__(self):
-        self.called = []
-    def __getattr__(self,name):
-        return TestCallableMethod(self,name)
-    def compare(self,tc,expected):
-        compare(tc,self.called,expected)
-    def print_called(self):
-        for e in self.called:
-            print e
-    def __repr__(self):
-        return '<TestCallable>'
-    
 class TestReader(BaseReader):
 
     def __init__(self,*sheets):
@@ -165,54 +131,135 @@ class TestBaseFilter(TestCase):
             ('finish',())
             ])
 
+class OurMethodFilter(MethodFilter):
+    def __init__(self,collector,*call_on):
+        MethodFilter.__init__(self,*call_on)
+        self.collector = collector        
+    def method(self,name,*args):
+        self.collector.append((name,args))
+        
 class TestMethodFilter(TestCase):
 
+    def setUp(self):
+        self.called = []
+
+    def do_calls_and_test(self,filter):
+        filter.next = tf = TestCallable()
+        filter.workbook('rdbook','wtbook_name')
+        filter.sheet('rdsheet','wtsheet_name')
+        filter.row(0,1)
+        filter.cell(0,1,2,3)
+        filter.finish()
+        self.assertEqual(tf.called,[
+            ('workbook',('rdbook','wtbook_name')),
+            ('sheet',('rdsheet','wtsheet_name')),
+            ('row',(0,1)),
+            ('cell',(0,1,2,3)),
+            ('finish',()),
+            ])
+        
     def test_all(self):
-        pass
+        self.do_calls_and_test(OurMethodFilter(self.called,True))
+        self.assertEqual(self.called,[
+            ('workbook',('rdbook','wtbook_name')),
+            ('sheet',('rdsheet','wtsheet_name')),
+            ('row',(0,1)),
+            ('cell',(0,1,2,3)),
+            ('finish',()),
+            ])
+
+    def test_somecalls_and_test(self):
+        self.do_calls_and_test(OurMethodFilter(self.called,'row','cell'))
+        self.assertEqual(self.called,[
+            ('row',(0,1)),
+            ('cell',(0,1,2,3)),
+            ])
 
     def test_none(self):
-        pass
-
-    def test_one(self):
-        pass
-
-    def test_invalid(self):
-        pass
-    
-    def setUp(self):
-        from xlutils.filter import BaseFilter
-        self.filter = BaseFilter()
-        self.filter.next = self.tf = TestCallable()
+        self.do_calls_and_test(OurMethodFilter(self.called))
+        self.assertEqual(self.called,[])
 
     def test_workbook(self):
-        self.filter.workbook('rdbook','wtbook_name')
-        self.assertEqual(self.tf.called,[
-            ('workbook',('rdbook','wtbook_name'))
+        self.do_calls_and_test(OurMethodFilter(self.called,'workbook'))
+        self.assertEqual(self.called,[
+            ('workbook',('rdbook','wtbook_name')),
             ])
-                         
+
     def test_sheet(self):
-        self.filter.sheet('rdsheet','wtsheet_name')
-        self.assertEqual(self.tf.called,[
-            ('sheet',('rdsheet','wtsheet_name'))
+        self.do_calls_and_test(OurMethodFilter(self.called,'sheet'))
+        self.assertEqual(self.called,[
+            ('sheet',('rdsheet','wtsheet_name')),
             ])
-                         
+
     def test_row(self):
-        self.filter.row(0,1)
-        self.assertEqual(self.tf.called,[
-            ('row',(0,1))
+        self.do_calls_and_test(OurMethodFilter(self.called,'row'))
+        self.assertEqual(self.called,[
+            ('row',(0,1)),
             ])
-                         
+
     def test_cell(self):
-        self.filter.cell(0,1,2,3)
-        self.assertEqual(self.tf.called,[
-            ('cell',(0,1,2,3))
+        self.do_calls_and_test(OurMethodFilter(self.called,'cell'))
+        self.assertEqual(self.called,[
+            ('cell',(0,1,2,3)),
             ])
-                         
+
     def test_finish(self):
-        self.filter.finish()
-        self.assertEqual(self.tf.called,[
-            ('finish',())
+        self.do_calls_and_test(OurMethodFilter(self.called,'finish'))
+        self.assertEqual(self.called,[
+            ('finish',()),
             ])
+
+    def test_invalid(self):
+        self.assertRaises(Exception,OurMethodFilter,self.called,'foo')
+    
+class TestEcho(TestCase):
+
+    def setUp(self):
+        from xlutils.filter import Echo
+        self.filter = Echo('workbook')
+
+    def test_method(self):
+        from StringIO import StringIO
+        import sys
+        try:
+            sys.stdout = out = StringIO()
+            self.filter.method('name','foo',1)
+        finally:
+            sys.stdout = sys.__stdout__
+        self.assertEqual(out.getvalue(),"name:('foo', 1)\n")
+        
+    def test_inheritance(self):
+        self.failUnless(isinstance(self.filter,MethodFilter))
+
+class TestMemoryLogger(TestCase):
+    
+    def setUp(self):
+        from xlutils.filter import MemoryLogger
+        self.filter = MemoryLogger('somepath','workbook')
+
+    def test_method(self):
+        import xlutils.filter
+        try:
+            o = xlutils.filter.h
+            xlutils.filter.h = h = TestTraversable()
+            self.filter.method('name','foo',1)
+        finally:
+            xlutils.filter.h = o
+        self.assertEqual(len(h.children),1)
+        self.assertEqual(tuple(h.children)[0].path,
+                         ".heap().stat.dump('somepath')")
+    
+    def test_method_no_heapy(self):
+        import xlutils.filter
+        try:
+            o = xlutils.filter.h
+            xlutils.filter.h = None
+            self.filter.method('name','foo',1)
+        finally:
+            xlutils.filter.h = o
+    
+    def test_inheritance(self):
+        self.failUnless(isinstance(self.filter,MethodFilter))
 
 class CloseableTemporaryFile:
     def __init__(self,parent,filename):
@@ -490,7 +537,9 @@ def test_suite():
         makeSuite(TestBaseReader),
         makeSuite(TestTestReader),
         makeSuite(TestBaseFilter),
-        # makeSuite(TestMethodFilter),
+        makeSuite(TestMethodFilter),
+        makeSuite(TestEcho),
+        makeSuite(TestMemoryLogger),
         makeSuite(TestBaseWriter),
         makeSuite(TestProcess),
         ))

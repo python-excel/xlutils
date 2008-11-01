@@ -409,24 +409,72 @@ class DirectoryWriter(BaseWriter):
     def get_stream(self,filename):
         return file(os.path.join(self.dir_path,filename),'wb')
 
+class MethodFilterMethod:
+
+    def __init__(self,mf,name):
+        self.mf,self.name = mf,name
+
+    def __call__(self,*args):
+        if self.name in self.mf.call_on:
+            self.mf.method(self.name,*args)
+        getattr(self.mf.next,self.name)(*args)
+        
 class MethodFilter:
     """
     This is a base class that implements functionality for filters
     that want to do a common task such as logging, printing or memory
-    usage recording on certain calls.
+    usage recording on certain calls configured at filter instantiation
+    time.
     """
 
-    def __init__(self,call_on=(
+    all_methods = (
         'workbook',
         'sheet',
         'row',
         'cell',
         'finish',
-        )):
+        )
+    
+    def method(self,name,*args):
+        """
+        This is the method that needs to be implemented.
+        It is called with the name of the method that was called on
+        the MethodFilter and the arguments that were passed to that
+        method. 
+        """
+        raise NotImplementedError
+    
+    def __init__(self,*call_on):
+        if call_on==(True,):
+            call_on = self.all_methods
+        for name in call_on:
+            if name not in self.all_methods:
+                raise ValueError('%r is not a valid method name'%(name,))
         self.call_on = call_on
 
     def __getattr__(self,name):
-        pass
+        return MethodFilterMethod(self,name)
+
+class Echo(MethodFilter):
+
+    def method(self,name,*args):
+        print "%s:%r"%(name,args)
+        
+try:
+    from guppy import hpy
+    h = hpy()
+except ImportError:
+    h = None
+    
+class MemoryLogger(MethodFilter):
+
+    def __init__(self,path,*call_on):
+        MethodFilter.__init__(self,*call_on)
+        self.path = path
+        
+    def method(self,name,*args):
+        if h is not None:
+            h.heap().stat.dump(self.path)
         
 def process(reader,*chain):
     for i in range(len(chain)-1):

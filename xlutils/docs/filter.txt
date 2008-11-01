@@ -212,6 +212,62 @@ Available Filters
   own filters. All the required methods are implemented such that they
   just call the same method on the next filter in the chain.
 
+  Echo
+  ----
+
+  This filter will print calls to the methods configured when the
+  filter is created along with the arguments passed.
+
+  >>> from xlutils.filter import Echo,process
+  >>> r = TestReader(
+  ...         ('Sheet1',(('R0C0','R0C1'),
+  ...                    ('R1C0','R1C1'))),
+  ...     )
+  >>> process(r,Echo('workbook'),TestCallable())
+  workbook:(<...DummyBook...>, 'test.xls')
+
+  If 'True' is passed instead of a list of method names, then all
+  methods called will be printed:
+
+  >>> process(r,Echo(True),TestCallable())
+  workbook:(<...DummyBook...>, 'test.xls')
+  sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
+  row:(0, 0)
+  cell:(0, 0, 0, 0)
+  cell:(0, 1, 0, 1)
+  row:(1, 1)
+  cell:(1, 0, 1, 0)
+  cell:(1, 1, 1, 1)
+  finish:()
+
+  MemoryLogger
+  ------------
+
+  This filter will dump stats to the path it was configured with using
+  the heapy package if it is available. If it is not available, no
+  operations are performed.
+
+  For example, with a MemoryLogger configured as follows:
+
+  >>> from xlutils.filter import MemoryLogger
+  >>> m = MemoryLogger('/some/path','sheet','cell')
+
+  The equivalent of the following call::
+
+    from guppy import hpp; hpy().heap().stat.dump('/some/path')
+
+  will be performed whenever the MemoryLogger's sheet and cell methods
+  are called.
+
+  A MemoryLogger configured as followed will log memory usage whenever
+  any of the MemoryLogger's methods are called:
+
+  >>> m = MemoryLogger('/some/path',True)
+
+  For more information on heapy, please see:
+
+  http://guppy-pe.sourceforge.net/#Heapy
+
 Example Usage
 =============
 
