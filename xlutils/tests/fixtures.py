@@ -53,3 +53,22 @@ def make_sheet(rows,cell_type=XL_CELL_TEXT,book=None):
             sheet.put_cell(rowx,colx,cell_type,row[colx],None)
     return sheet
 
+def compare(tc,actual,expected,cmp=cmp,repr=repr):
+    l_expected = len(expected)
+    l_actual = len(actual)
+    i = 0
+    while i<l_expected and i<l_actual:
+        if cmp(actual[i],expected[i]):
+            break
+        i+=1
+    if l_expected==l_actual==i:
+        return
+    tc.fail(('Calls not as expected:\n'
+             '    same:%r\n'
+             '  actual:%r\n'
+             'expected:%r')%(
+        [repr(o) for o in actual[:i]],
+        [repr(o) for o in actual[i:]],
+        [repr(o) for o in expected[i:]]
+        ))
+

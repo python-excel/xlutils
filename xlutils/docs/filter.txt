@@ -147,6 +147,21 @@ Available Writers
   >>> isinstance(w,BaseWriter)
   True
 
+  TestCallable
+  ------------
+
+  While not specifically a writer, this component can be used as one
+  and is very helpful when unit testing since it collects information
+  about all calls made to attributes of it. This is probably best
+  demonstrated with an example:
+
+  >>> from xlutils.tests.test_filter import TestCallable
+  >>> c = TestCallable()
+  >>> c.method1()
+  >>> c.method2(1,2,3)
+  >>> c.called
+  [('method1', ()), ('method2', (1, 2, 3))]
+
 Available Filters
 =================
 

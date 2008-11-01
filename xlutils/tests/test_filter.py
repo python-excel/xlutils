@@ -8,28 +8,9 @@ from tempfile import TemporaryFile
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook
 from xlutils.filter import BaseReader,GlobReader,BaseWriter,process
-from xlutils.tests.fixtures import test_files,test_xls_path,make_book
+from xlutils.tests.fixtures import test_files,test_xls_path,make_book,compare
 
 import os
-
-def compare(tc,actual,expected,cmp=cmp,repr=repr):
-    l_expected = len(expected)
-    l_actual = len(actual)
-    i = 0
-    while i<l_expected and i<l_actual:
-        if cmp(actual[i],expected[i]):
-            break
-        i+=1
-    if l_expected==l_actual==i:
-        return
-    tc.fail(('Calls not as expected:\n'
-             '    same:%r\n'
-             '  actual:%r\n'
-             'expected:%r')%(
-        [repr(o) for o in actual[:i]],
-        [repr(o) for o in actual[i:]],
-        [repr(o) for o in expected[i:]]
-        ))
 
 class O:
     """
@@ -47,17 +28,17 @@ class O:
     def __repr__(self):
         return '<O:%s>'%self.class_name
 
-class TestFilterMethod:
+class TestCallableMethod:
     def __init__(self,tf,name):
         self.tf,self.name = tf,name
     def __call__(self,*args):
         self.tf.called.append((self.name,tuple(args)))
 
-class TestFilter:
+class TestCallable:
     def __init__(self):
         self.called = []
     def __getattr__(self,name):
-        return TestFilterMethod(self,name)
+        return TestCallableMethod(self,name)
     def compare(self,tc,expected):
         compare(tc,self.called,expected)
     
@@ -65,7 +46,7 @@ class TestBaseReader(TestCase):
 
     def test_no_implementation(self):
         r = BaseReader()
-        f = TestFilter()
+        f = TestCallable()
         self.assertRaises(NotImplementedError,r,f)
         self.assertEqual(f.called,[])
         
@@ -75,7 +56,7 @@ class TestBaseReader(TestCase):
             def get_filepaths(self):
                 return (test_xls_path,)
         t = TestReader()
-        f = TestFilter()
+        f = TestCallable()
         t(f)
         f.compare(self,[
             ('workbook',(O('xlrd.Book'),'test.xls')),
@@ -106,7 +87,7 @@ class TestBaseReader(TestCase):
             def get_workbooks(self):
                 yield book,'test.xls'
         t = TestReader()
-        f = TestFilter()
+        f = TestCallable()
         t(f)
         f.compare(self,[
             ('workbook',(O('xlutils.tests.fixtures.DummyBook'),'test.xls')),
@@ -126,7 +107,7 @@ class TestBaseFilter(TestCase):
     def setUp(self):
         from xlutils.filter import BaseFilter
         self.filter = BaseFilter()
-        self.filter.next = self.tf = TestFilter()
+        self.filter.next = self.tf = TestCallable()
 
     def test_workbook(self):
         self.filter.workbook('rdbook','wtbook_name')
@@ -175,7 +156,7 @@ class TestMethodFilter(TestCase):
     def setUp(self):
         from xlutils.filter import BaseFilter
         self.filter = BaseFilter()
-        self.filter.next = self.tf = TestFilter()
+        self.filter.next = self.tf = TestCallable()
 
     def test_workbook(self):
         self.filter.workbook('rdbook','wtbook_name')
@@ -470,11 +451,11 @@ class TestProcess(TestCase):
         class DummyReader:
             def __call__(self,filter):
                 filter.finished()
-        F1 = TestFilter()
-        F2 = TestFilter()
+        F1 = TestCallable()
+        F2 = TestCallable()
         process(DummyReader(),F1,F2)
         self.failUnless(F1.next is F2)
-        self.failUnless(isinstance(F2.next,TestFilterMethod))
+        self.failUnless(isinstance(F2.next,TestCallableMethod))
         F1.compare(self,[('finished',())])
         F2.compare(self,())
     
