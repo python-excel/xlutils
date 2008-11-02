@@ -129,7 +129,9 @@ class BaseFilter:
 
         A filter should call this method on the next filter in the
         chain as an indication that no further calls will be made to
-        any methods.
+        any methods or that, if they are, any new calls should be
+        treated as new batch of workbooks with no information retained
+        from the previous batch.
         """
         self.next.finish()
 
