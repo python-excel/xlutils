@@ -28,7 +28,7 @@ class TestReader(BaseReader):
 class TestTestReader(TestCase):
 
     def test_cell_type(self):
-        r = TestReader(('Sheet1',(((0.0,XL_CELL_NUMBER),),)))
+        r = TestReader(('Sheet1',(((XL_CELL_NUMBER,0.0),),)))
         book = tuple(r.get_workbooks())[0][0]
         cell = book.sheet_by_index(0).cell(0,0)
         self.assertEqual(cell.value,0.0)

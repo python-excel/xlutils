@@ -23,6 +23,8 @@ class DummyBook:
     formatting_info = 0
     _xf_index_to_xl_type_map = {}
     _sheet_visibility = []
+    xf_list = []
+    datemode = 0
 
     def __init__(self):
         self.__sheets = []
@@ -53,7 +55,7 @@ def make_sheet(rows,book=None,name='test sheet',number=0):
         for colx in range(len(row)):
             value = row[colx]
             if isinstance(value,tuple):
-                value,cell_type = value
+                cell_type,value = value
             else:
                 cell_type=XL_CELL_TEXT
             sheet.put_cell(rowx,colx,cell_type,value,None)

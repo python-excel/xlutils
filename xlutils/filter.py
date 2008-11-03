@@ -10,6 +10,9 @@ import xlrd,xlwt
 
 from glob import glob
 from tempfile import TemporaryFile
+from xlutils.display import quoted_sheet_name,cell_display
+from xlwt.Style import default_style
+logger = logging.getLogger('xlutils.filter')
 
 class BaseReader:
 
@@ -266,19 +269,6 @@ class BaseWriter:
         self.wtcols = set() # keep track of which columns have had their attributes set up
         self.wtrowx = -1 # assumes the output rows will be written in ascending order
         #
-        # default column width: STANDARDWIDTH, DEFCOLWIDTH
-        #
-        if rdsheet.standardwidth is not None:
-            # STANDARDWIDTH is expressed in units of 1/256 of a 
-            # character-width, but DEFCOLWIDTH is expressed in units of
-            # character-width; we lose precision by rounding to
-            # the higher whole number of characters.
-            #### XXXX TODO: implement STANDARDWIDTH record in xlwt.
-            wtsheet.col_default_width = \
-                (rdsheet.standardwidth + 255) // 256
-        elif rdsheet.defcolwidth is not None:
-            wtsheet.col_default_width = rdsheet.defcolwidth
-        #
         # MERGEDCELLS
         # 
         mc_map = {}
@@ -291,6 +281,21 @@ class BaseWriter:
                     mc_nfa.add((rowx, colx))
         self.merged_cell_top_left_map = mc_map
         self.merged_cell_already_set = mc_nfa
+        if not rdsheet.formatting_info:
+            return
+        #
+        # default column width: STANDARDWIDTH, DEFCOLWIDTH
+        #
+        if rdsheet.standardwidth is not None:
+            # STANDARDWIDTH is expressed in units of 1/256 of a 
+            # character-width, but DEFCOLWIDTH is expressed in units of
+            # character-width; we lose precision by rounding to
+            # the higher whole number of characters.
+            #### XXXX TODO: implement STANDARDWIDTH record in xlwt.
+            wtsheet.col_default_width = \
+                (rdsheet.standardwidth + 255) // 256
+        elif rdsheet.defcolwidth is not None:
+            wtsheet.col_default_width = rdsheet.defcolwidth
         #
         # WINDOW2
         #
@@ -357,7 +362,10 @@ class BaseWriter:
         cty = cell.ctype
         if cty == xlrd.XL_CELL_EMPTY:
             return
-        style = self.style_list[cell.xf_index]
+        if cell.xf_index is not None:
+            style = self.style_list[cell.xf_index]
+        else:
+            style = default_style
         rdcoords2d = (rdrowx, rdcolx)
         if rdcoords2d in self.merged_cell_top_left_map:
             # The cell is the governing cell of a group of 
@@ -498,12 +506,13 @@ class ErrorFilter(BaseReader,BaseWriter):
 
     close_after_write = False
     
-    def __init__(self,level=logging.ERROR):
+    def __init__(self,level=logging.ERROR,message='No output as errors have occurred.'):
         self.files = []
         self.handler = ErrorHandler()
         self.handler.setLevel(level)
         self.logger = logging.getLogger()
         self.logger.addHandler(self.handler)
+        self.message = message
 
     def get_stream(self,filename):
         f = TemporaryFile()
@@ -518,9 +527,28 @@ class ErrorFilter(BaseReader,BaseWriter):
                 filename
                 )
 
+    def sheet(self,rdsheet,wtsheet_name):
+        self.rdsheet = rdsheet
+        BaseWriter.sheet(self,rdsheet,wtsheet_name)
+        
+    def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
+        cell = self.rdsheet.cell(rdrowx,rdcolx)
+        if cell.ctype == xlrd.XL_CELL_EMPTY:
+            return
+        if cell.ctype in (xlrd.XL_CELL_ERROR, xlrd.XL_CELL_BOOLEAN):
+            logger.error("Cell %s of sheet %r contains a bad value: %s" % (
+                        xlrd.cellname(rdrowx, rdcolx),
+                        quoted_sheet_name(self.rdsheet.name),
+                        cell_display(cell,self.rdbook.datemode),
+                        ))
+            return
+        BaseWriter.cell(self,rdrowx,rdcolx,wtrowx,wtcolx)
+
     def finish(self):
         BaseWriter.finish(self)
-        if not self.handler.fired:
+        if self.handler.fired:
+            logger.error(self.message)
+        else:
             self(self.next)
         for file,filename in self.files:
             file.close()

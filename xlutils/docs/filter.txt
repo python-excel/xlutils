@@ -132,7 +132,7 @@ Available Readers
   >>> r = TestReader(
   ...         ('Sheet1',(('R0C0','R0C1'),
   ...                    ('R1C0','R1C1'))),
-  ...         ('Sheet2',(((0.0,XL_CELL_NUMBER),),),)
+  ...         ('Sheet2',(((XL_CELL_NUMBER,0.0),),),)
   ...     )
   >>> c = TestCallable()
   >>> r(c)
@@ -149,15 +149,6 @@ Available Readers
   ('row', (0, 0))
   ('cell', (0, 0, 0, 0))
   ('finish', ())
-
-  NB: This reader cannot be used with any chain that ends in something
-      that subclasses BaseWriter:
-
-  >>> from xlutils.filter import DirectoryWriter
-  >>> r(DirectoryWriter(temp_dir))
-  Traceback (most recent call last):
-  ...
-  AttributeError: DummyBook instance has no attribute 'xf_list'
 
 Available Writers
 =================
@@ -237,8 +228,13 @@ Available Filters
   ...        self.level = level
   ...    def workbook(self,rdbook,wtbook_name):
   ...        if wtbook_name=='test.xls':
-  ...            logging.getLogger('our logger').log(self.level,'a message')
+  ...            logging.getLogger('theLogger').log(self.level,'a message')
   ...        self.next.workbook(rdbook,wtbook_name)
+
+  We also need to be able to see what messages are logged:
+
+  >>> from zope.testing.loggingsupport import InstalledHandler
+  >>> h = InstalledHandler('')
 
   So, when we have errors logged, no methods other than finish are
   passed on to the next filter:
@@ -248,12 +244,70 @@ Available Filters
   >>> len(c.called)
   0
 
+  As well as the error message logged, we can also see the ErrorFilter
+  logs an error to that that the method calls have not been passed on:
+
+  >>> print h
+  theLogger ERROR
+    a message
+  xlutils.filter ERROR
+    No output as errors have occurred.
+  >>> h.clear()
+  
+  This error message can be controlled when the ErrorFilter is
+  instantiated:
+
+  >>> f = ErrorFilter(message='wingnuts! errors have occurred!')
+  >>> process(MyReader('test.xls'),Log(logging.ERROR),f,c)
+  >>> print h
+  theLogger ERROR
+    a message
+  xlutils.filter ERROR
+    wingnuts! errors have occurred!
+
   However, when no errors are logged, all method calls are passed:
 
   >>> c = TestCallable()
   >>> process(MyReader('test.xls'),Log(logging.WARNING),f,c)
   >>> len(c.called)
   16
+
+  In addition to the logging of error messages, the following
+  conditions will also cause all methods to be filtered:
+
+  - errors cells:
+
+    >>> from xlrd import XL_CELL_ERROR
+    >>> r = TestReader(
+    ...         (u'Price(\xa3)',(((XL_CELL_ERROR,0),),)),
+    ...         )
+    >>> c = TestCallable()
+    >>> h.clear()
+    >>> process(r,ErrorFilter(),c)
+    >>> len(c.called)
+    0
+    >>> print h
+    xlutils.filter ERROR
+      Cell A1 of sheet 'Price(?)' contains a bad value: error (#NULL!)
+    xlutils.filter ERROR
+      No output as errors have occurred.
+  
+  - boolean cells, as these cannot be written by xlwt:
+
+    >>> from xlrd import XL_CELL_BOOLEAN
+    >>> r = TestReader(
+    ...         (u'Sheet 1',(((XL_CELL_BOOLEAN,0),),)),
+    ...         )
+    >>> c = TestCallable()
+    >>> h.clear()
+    >>> process(r,ErrorFilter(),c)
+    >>> len(c.called)
+    0
+    >>> print h
+    xlutils.filter ERROR
+      Cell A1 of sheet "'Sheet 1'" contains a bad value: logical (FALSE)
+    xlutils.filter ERROR
+      No output as errors have occurred.
 
   You can also configure the log level at which messages prevent the
   ErrorFilter from passing its method calls on to the next filter in
