@@ -11,6 +11,7 @@ import xlrd,xlwt
 from glob import glob
 from tempfile import TemporaryFile
 from xlutils.display import quoted_sheet_name,cell_display
+from xlutils.margins import cells_all_junk
 from xlwt.Style import default_style
 logger = logging.getLogger('xlutils.filter')
 
@@ -555,6 +556,47 @@ class ErrorFilter(BaseReader,BaseWriter):
         self.files = []
         self.handler.fired = False
 
+class ColumnTrimmer(BaseFilter):
+
+    rdsheet = None
+
+    def __init__(self,is_junk=None):
+        self.is_junk = is_junk
+        
+    def flush(self):
+        if self.rdsheet is not None:
+            for wtrowx in sorted(self.rows.keys()):
+                for rdrowx,rdcolx,wtcolx in self.rows[wtrowx]:
+                    if wtcolx<=self.max_nonjunk:
+                        self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+            if self.max!=self.max_nonjunk:
+                logger.debug("Number of columns trimmed from %d to %d for sheet %r",
+                             self.max+1,
+                             self.max_nonjunk+1,
+                             quoted_sheet_name(self.rdsheet.name))
+        self.rows = {}
+        self.max_nonjunk = 0
+        self.max = 0
+                
+    def sheet(self,rdsheet,wtsheet_name):
+        self.flush()
+        self.rdsheet = rdsheet
+        self.next.sheet(self.rdsheet,wtsheet_name)
+        
+    def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
+        if wtcolx>self.max:
+            self.max = wtcolx
+        cell = self.rdsheet.cell(rdrowx,rdcolx)
+        if wtcolx>self.max_nonjunk and not cells_all_junk((cell,),self.is_junk):
+            self.max_nonjunk = wtcolx
+        if wtrowx not in self.rows:
+            self.rows[wtrowx]=[]
+        self.rows[wtrowx].append((rdrowx,rdcolx,wtcolx))
+                                                          
+    def finish(self):
+        self.flush()
+        self.next.finish()
+        
 def process(reader,*chain):
     for i in range(len(chain)-1):
         chain[i].next = chain[i+1]

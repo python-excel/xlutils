@@ -203,6 +203,71 @@ Available Filters
   own filters. All the required methods are implemented such that they
   just call the same method on the next filter in the chain.
 
+  ColumnTrimmer
+  -------------
+
+  This filter will strip columns containing no useful data from the
+  end of sheets. For example:
+
+  >>> from xlutils.filter import process,ColumnTrimmer
+  >>> r = TestReader(
+  ...         ('Sheet1',(('','',''),
+  ...                    ('R1C0','',''),
+  ...                    ('R2C0','R2C1',' \t\r\n'))),
+  ...         ('Sheet2',(('R0C0',),),),
+  ...         ('Sheet3',(('R0C0','',(XL_CELL_NUMBER,0.0)),)),
+  ...     )
+  >>> c = TestCallable()
+  >>> process(r,ColumnTrimmer(),c)
+  >>> c.print_called()
+  ('workbook', (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'))
+  ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'))
+  ('row', (0, 0))
+  ('row', (1, 1))
+  ('row', (2, 2))
+  ('cell', (0, 0, 0, 0))
+  ('cell', (0, 1, 0, 1))
+  ('cell', (1, 0, 1, 0))
+  ('cell', (1, 1, 1, 1))
+  ('cell', (2, 0, 2, 0))
+  ('cell', (2, 1, 2, 1))
+  ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet2'))
+  ('row', (0, 0))
+  ('cell', (0, 0, 0, 0))
+  ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet3'))
+  ('row', (0, 0))
+  ('cell', (0, 0, 0, 0))
+  ('finish', ())
+
+  When sheets are trimmed, a message is also logged to aid debugging:
+ 
+  >>> from zope.testing.loggingsupport import InstalledHandler
+  >>> h = InstalledHandler('')
+  >>> process(r,ColumnTrimmer(),c)
+  >>> print h
+  xlutils.filter DEBUG
+    Number of columns trimmed from 3 to 2 for sheet 'Sheet1'
+  xlutils.filter DEBUG
+    Number of columns trimmed from 3 to 1 for sheet 'Sheet3'
+
+  The definition of 'no useful data' can also be controlled by passing
+  in a function that returns True or False for each value:
+
+  >>> def not_useful(cell):
+  ...     if not cell.value or cell.value=='junk': return True
+
+  >>> r = TestReader(
+  ...         ('Sheet1',(('R1C0','','junk'),)),
+  ...     )
+  >>> c = TestCallable()
+  >>> process(r,ColumnTrimmer(not_useful),c)
+  >>> c.print_called()
+  ('workbook', (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'))
+  ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'))
+  ('row', (0, 0))
+  ('cell', (0, 0, 0, 0))
+  ('finish', ())
+
   ErrorFilter
   -----------
 
