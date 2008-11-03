@@ -108,7 +108,16 @@ script as helpful functions:
     True
     >>> cells_all_junk([Cell(XL_CELL_TEXT,'not rubbish')],isrubbish)
     False
+    
+    Passing a function like this isn't only limited to text cells:
 
+    >>> def isnegative(value): return isinstance(value,float) and value<0 or False
+	    
+    >>> cells_all_junk([Cell(XL_CELL_NUMBER,-1.0)],isnegative)
+    True
+    >>> cells_all_junk([Cell(XL_CELL_NUMBER,1.0)],isnegative)
+    False
+ 
   * Date, boolean, and error fields are all not considered to be blank:
 
     >>> from xlrd import XL_CELL_DATE, XL_CELL_BOOLEAN, XL_CELL_ERROR
