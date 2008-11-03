@@ -99,7 +99,7 @@ script as helpful functions:
 
     However, you can also pass a checker function such as this one:
 
-    >>> def isrubbish(value): return value=='rubbish'
+    >>> def isrubbish(cell): return cell.value=='rubbish'
 
     Which can then be used to check for junk conditions of your own
     choice: 
@@ -111,7 +111,7 @@ script as helpful functions:
     
     Passing a function like this isn't only limited to text cells:
 
-    >>> def isnegative(value): return isinstance(value,float) and value<0 or False
+    >>> def isnegative(cell): return isinstance(cell.value,float) and cell.value<0 or False
 	    
     >>> cells_all_junk([Cell(XL_CELL_NUMBER,-1.0)],isnegative)
     True
@@ -168,7 +168,7 @@ script as helpful functions:
   You can also pass a checking function through to the cells_all_junk
   calls:
 
-  >>> number_of_good_rows(sheet,checker=lambda c:c=='X')
+  >>> number_of_good_rows(sheet,checker=lambda c:c.value=='X')
   0
 
 
@@ -204,7 +204,7 @@ script as helpful functions:
   You can also pass a checking function through to the cells_all_junk
   calls:
 
-  >>> number_of_good_cols(sheet,checker=lambda c:c=='X')
+  >>> number_of_good_cols(sheet,checker=lambda c:c.value=='X')
   0
 
 

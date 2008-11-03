@@ -32,7 +32,7 @@ def cells_all_junk(cells, is_rubbish=None):
         if cell.ctype == XL_CELL_NUMBER:
             if not cell.value:
                 continue
-        if is_rubbish is not None and is_rubbish(cell.value):
+        if is_rubbish is not None and is_rubbish(cell):
             continue
         return False
     return True
