@@ -212,6 +212,108 @@ Available Filters
   own filters. All the required methods are implemented such that they
   just call the same method on the next filter in the chain.
 
+  ErrorFilter
+  -----------
+
+  This filter caches all method calls in a file on disk and will only
+  pass them on to filters further down in the chain when its finish
+  method has been called *and* no error messages have been logged to
+  the python logging framework.
+
+  NB: To be effective, this filter must be the last in the chain
+      before the writer!
+
+  Here's an example of how to set one up:
+
+  >>> from xlutils.filter import process,ErrorFilter
+  >>> f = ErrorFilter()
+
+  To show the filter in action, we need a little helper:
+
+  >>> import logging
+  >>> from xlutils.filter import BaseFilter
+  >>> class Log(BaseFilter):
+  ...    def __init__(self,level):
+  ...        self.level = level
+  ...    def workbook(self,rdbook,wtbook_name):
+  ...        if wtbook_name=='test.xls':
+  ...            logging.getLogger('our logger').log(self.level,'a message')
+  ...        self.next.workbook(rdbook,wtbook_name)
+
+  So, when we have errors logged, no methods other than finish are
+  passed on to the next filter:
+     
+  >>> c = TestCallable()
+  >>> process(MyReader('test.xls'),Log(logging.ERROR),f,c)
+  >>> len(c.called)
+  0
+
+  However, when no errors are logged, all method calls are passed:
+
+  >>> c = TestCallable()
+  >>> process(MyReader('test.xls'),Log(logging.WARNING),f,c)
+  >>> len(c.called)
+  16
+
+  You can also configure the log level at which messages prevent the
+  ErrorFilter from passing its method calls on to the next filter in
+  the chain:
+
+  >>> f = ErrorFilter(logging.WARNING)
+
+  Now, warnings will cause methods to not be passed on:
+
+  >>> c = TestCallable()
+  >>> process(MyReader('test.xls'),Log(logging.WARNING),f,c)
+  >>> len(c.called)
+  0
+
+  But if only debug messages are logged, the method calls will still
+  be passed on:
+
+  >>> c = TestCallable()
+  >>> process(MyReader('test.xls'),Log(logging.DEBUG),f,c)
+  >>> len(c.called)
+  16
+
+  An example which may prove useful is how to set up a filter such
+  that if any errors are logged while processing one workbook, that
+  workbook is filtered out but other subsequent workbooks are not
+  filtered out.
+
+  This is done by inserting a filter such as the following earlier in
+  the chain:
+
+  >>> class BatchByWorkbook(BaseFilter):
+  ...    started = False
+  ...    def workbook(self,rdbook,wtbook_name):
+  ...       if self.started:
+  ...           self.next.finish()
+  ...       self.next.workbook(rdbook,wtbook_name)
+  ...       self.started = True
+
+  Here it is at work, starting with an empty output directory:
+
+  >>> os.listdir(temp_dir)
+  []
+
+  Now test.xls and testall.xls are processed, but errors are only
+  logged while processing test.xls:
+
+  >>> process(
+  ...     GlobReader(os.path.join(test_files,'*.xls')),
+  ...     BatchByWorkbook(),
+  ...     Log(logging.ERROR),
+  ...     ErrorFilter(),
+  ...     DirectoryWriter(temp_dir)
+  ... )
+
+  So, the output directory contains testall.xls, but no test.xls:
+
+  >>> os.listdir(temp_dir)
+  ['testall.xls']
+  >>> os.remove(os.path.join(temp_dir,'testall.xls'))
+
   Echo
   ----
 

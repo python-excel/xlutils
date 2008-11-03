@@ -4,10 +4,12 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
+import logging
 import os
 import xlrd,xlwt
 
 from glob import glob
+from tempfile import TemporaryFile
 
 class BaseReader:
 
@@ -158,6 +160,8 @@ class BaseWriter:
     
     wtbook = None
     
+    close_after_write = True
+
     def get_stream(self,filename):
         """
         This method is called once for each file written.
@@ -170,7 +174,9 @@ class BaseWriter:
         if self.wtbook is not None:
             stream = self.get_stream(self.wtname)
             self.wtbook.save(stream)
-            stream.close()
+            if self.close_after_write:
+                stream.close()
+            del self.wtbook
 
     def workbook(self,rdbook,wtbook_name):
         self.close()        
@@ -478,6 +484,49 @@ class MemoryLogger(MethodFilter):
         if h is not None:
             h.heap().stat.dump(self.path)
         
+
+class ErrorHandler(logging.Handler):
+
+    fired = False
+    
+    def emit(self, record):
+        self.fired=True
+
+class ErrorFilter(BaseReader,BaseWriter):
+
+    handler = None
+
+    close_after_write = False
+    
+    def __init__(self,level=logging.ERROR):
+        self.files = []
+        self.handler = ErrorHandler()
+        self.handler.setLevel(level)
+        self.logger = logging.getLogger()
+        self.logger.addHandler(self.handler)
+
+    def get_stream(self,filename):
+        f = TemporaryFile()
+        self.files.append((f,filename))
+        return f
+
+    def get_workbooks(self):
+        for file,filename in self.files:
+            file.seek(0)
+            yield (
+                xlrd.open_workbook(filename,file_contents=file.read(),pickleable=0,formatting_info=1),
+                filename
+                )
+
+    def finish(self):
+        BaseWriter.finish(self)
+        if not self.handler.fired:
+            self(self.next)
+        for file,filename in self.files:
+            file.close()
+        self.files = []
+        self.handler.fired = False
+
 def process(reader,*chain):
     for i in range(len(chain)-1):
         chain[i].next = chain[i+1]

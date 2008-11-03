@@ -489,10 +489,7 @@ class TestBaseWriter(TestCase):
     def test_single_workbook_with_all_features(self):
         # create test reader
         test_xls_path = os.path.join(test_files,'testall.xls')
-        class TestReader(BaseReader):
-            def get_filepaths(self):
-                return (test_xls_path,)
-        r = TestReader()
+        r = GlobReader(test_xls_path)
         # source sheet must have merged cells for test!
         book = tuple(r.get_workbooks())[0][0]
         self.failUnless(book.sheet_by_index(0).merged_cells)
