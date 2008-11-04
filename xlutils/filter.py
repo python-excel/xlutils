@@ -461,20 +461,26 @@ class MethodFilter:
         """
         raise NotImplementedError
     
-    def __init__(self,*call_on):
-        if call_on==(True,):
-            call_on = self.all_methods
-        for name in call_on:
+    def __init__(self,methods=True):
+        if methods==True:
+            methods = self.all_methods
+        for name in methods:
             if name not in self.all_methods:
                 raise ValueError('%r is not a valid method name'%(name,))
-        self.call_on = call_on
+        self.call_on = methods
 
     def __getattr__(self,name):
         return MethodFilterMethod(self,name)
 
 class Echo(MethodFilter):
 
+    def __init__(self,name=None,methods=True):
+        MethodFilter.__init__(self,methods)
+        self.name = name
+
     def method(self,name,*args):
+        if self.name:
+            print repr(self.name),
         print "%s:%r"%(name,args)
         
 try:
@@ -485,8 +491,8 @@ except ImportError:
     
 class MemoryLogger(MethodFilter):
 
-    def __init__(self,path,*call_on):
-        MethodFilter.__init__(self,*call_on)
+    def __init__(self,path,methods=True):
+        MethodFilter.__init__(self,methods)
         self.path = path
         
     def method(self,name,*args):

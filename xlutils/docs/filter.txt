@@ -444,13 +444,13 @@ Available Filters
   ...         ('Sheet1',(('R0C0','R0C1'),
   ...                    ('R1C0','R1C1'))),
   ...     )
-  >>> process(r,Echo('workbook'),TestCallable())
+  >>> process(r,Echo(methods=('workbook',)),TestCallable())
   workbook:(<...DummyBook...>, 'test.xls')
 
   If 'True' is passed instead of a list of method names, then all
   methods called will be printed:
 
-  >>> process(r,Echo(True),TestCallable())
+  >>> process(r,Echo(methods=True),TestCallable())
   workbook:(<...DummyBook...>, 'test.xls')
   sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
   row:(0, 0)
@@ -460,6 +460,30 @@ Available Filters
   cell:(1, 0, 1, 0)
   cell:(1, 1, 1, 1)
   finish:()
+
+  If you need to see what's happening at various points in a chain,
+  you can also give an Echo a name:
+
+  >>> process(r,Echo('first'),Echo('second'),TestCallable())
+  'first' workbook:(<...DummyBook...>, 'test.xls')
+  'second' workbook:(<...DummyBook...>, 'test.xls')
+  'first' sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
+  'second' sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
+  'first' row:(0, 0)
+  'second' row:(0, 0)
+  'first' cell:(0, 0, 0, 0)
+  'second' cell:(0, 0, 0, 0)
+  'first' cell:(0, 1, 0, 1)
+  'second' cell:(0, 1, 0, 1)
+  'first' row:(1, 1)
+  'second' row:(1, 1)
+  'first' cell:(1, 0, 1, 0)
+  'second' cell:(1, 0, 1, 0)
+  'first' cell:(1, 1, 1, 1)
+  'second' cell:(1, 1, 1, 1)
+  'first' finish:()
+  'second' finish:()
+
 
   MemoryLogger
   ------------
@@ -471,7 +495,7 @@ Available Filters
   For example, with a MemoryLogger configured as follows:
 
   >>> from xlutils.filter import MemoryLogger
-  >>> m = MemoryLogger('/some/path','sheet','cell')
+  >>> m = MemoryLogger('/some/path',methods=('sheet','cell'))
 
   The equivalent of the following call::
 

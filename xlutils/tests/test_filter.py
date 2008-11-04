@@ -132,8 +132,8 @@ class TestBaseFilter(TestCase):
             ])
 
 class OurMethodFilter(MethodFilter):
-    def __init__(self,collector,*call_on):
-        MethodFilter.__init__(self,*call_on)
+    def __init__(self,collector,call_on=True):
+        MethodFilter.__init__(self,call_on)
         self.collector = collector        
     def method(self,name,*args):
         self.collector.append((name,args))
@@ -159,7 +159,7 @@ class TestMethodFilter(TestCase):
             ])
         
     def test_all(self):
-        self.do_calls_and_test(OurMethodFilter(self.called,True))
+        self.do_calls_and_test(OurMethodFilter(self.called))
         self.assertEqual(self.called,[
             ('workbook',('rdbook','wtbook_name')),
             ('sheet',('rdsheet','wtsheet_name')),
@@ -169,73 +169,83 @@ class TestMethodFilter(TestCase):
             ])
 
     def test_somecalls_and_test(self):
-        self.do_calls_and_test(OurMethodFilter(self.called,'row','cell'))
+        self.do_calls_and_test(OurMethodFilter(self.called,['row','cell']))
         self.assertEqual(self.called,[
             ('row',(0,1)),
             ('cell',(0,1,2,3)),
             ])
 
     def test_none(self):
-        self.do_calls_and_test(OurMethodFilter(self.called))
+        self.do_calls_and_test(OurMethodFilter(self.called,()))
         self.assertEqual(self.called,[])
 
     def test_workbook(self):
-        self.do_calls_and_test(OurMethodFilter(self.called,'workbook'))
+        self.do_calls_and_test(OurMethodFilter(self.called,['workbook']))
         self.assertEqual(self.called,[
             ('workbook',('rdbook','wtbook_name')),
             ])
 
     def test_sheet(self):
-        self.do_calls_and_test(OurMethodFilter(self.called,'sheet'))
+        self.do_calls_and_test(OurMethodFilter(self.called,['sheet']))
         self.assertEqual(self.called,[
             ('sheet',('rdsheet','wtsheet_name')),
             ])
 
     def test_row(self):
-        self.do_calls_and_test(OurMethodFilter(self.called,'row'))
+        self.do_calls_and_test(OurMethodFilter(self.called,['row']))
         self.assertEqual(self.called,[
             ('row',(0,1)),
             ])
 
     def test_cell(self):
-        self.do_calls_and_test(OurMethodFilter(self.called,'cell'))
+        self.do_calls_and_test(OurMethodFilter(self.called,['cell']))
         self.assertEqual(self.called,[
             ('cell',(0,1,2,3)),
             ])
 
     def test_finish(self):
-        self.do_calls_and_test(OurMethodFilter(self.called,'finish'))
+        self.do_calls_and_test(OurMethodFilter(self.called,['finish']))
         self.assertEqual(self.called,[
             ('finish',()),
             ])
 
     def test_invalid(self):
-        self.assertRaises(Exception,OurMethodFilter,self.called,'foo')
+        self.assertRaises(Exception,OurMethodFilter,self.called,['foo'])
     
+from xlutils.filter import Echo
+
 class TestEcho(TestCase):
 
-    def setUp(self):
-        from xlutils.filter import Echo
-        self.filter = Echo('workbook')
-
     def test_method(self):
+        filter = Echo(methods=['workbook'])
         from StringIO import StringIO
         import sys
         try:
             sys.stdout = out = StringIO()
-            self.filter.method('name','foo',1)
+            filter.method('name','foo',1)
         finally:
             sys.stdout = sys.__stdout__
         self.assertEqual(out.getvalue(),"name:('foo', 1)\n")
         
+    def test_method_with_name(self):
+        filter = Echo('echo',['workbook'])
+        from StringIO import StringIO
+        import sys
+        try:
+            sys.stdout = out = StringIO()
+            filter.method('name','foo',1)
+        finally:
+            sys.stdout = sys.__stdout__
+        self.assertEqual(out.getvalue(),"'echo' name:('foo', 1)\n")
+        
     def test_inheritance(self):
-        self.failUnless(isinstance(self.filter,MethodFilter))
+        self.failUnless(isinstance(Echo(),MethodFilter))
 
 class TestMemoryLogger(TestCase):
     
     def setUp(self):
         from xlutils.filter import MemoryLogger
-        self.filter = MemoryLogger('somepath','workbook')
+        self.filter = MemoryLogger('somepath',['workbook'])
 
     def test_method(self):
         import xlutils.filter
