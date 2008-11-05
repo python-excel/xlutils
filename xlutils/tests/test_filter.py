@@ -6,10 +6,11 @@
 
 from tempfile import TemporaryFile
 from unittest import TestSuite,TestCase,makeSuite
-from xlrd import open_workbook,XL_CELL_NUMBER
+from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
 from xlutils.tests.fixtures import compare,O,TestCallable,TestCallableMethod,TestTraversable
+from zope.testing.loggingsupport import InstalledHandler
 
 import os
 
@@ -113,6 +114,12 @@ class TestBaseFilter(TestCase):
             ('sheet',('rdsheet','wtsheet_name'))
             ])
                          
+    def test_set_rdsheet(self):
+        self.filter.set_rdsheet('rdsheet2')
+        self.assertEqual(self.tf.called,[
+            ('set_rdsheet',('rdsheet2',))
+            ])
+                         
     def test_row(self):
         self.filter.row(0,1)
         self.assertEqual(self.tf.called,[
@@ -149,12 +156,14 @@ class TestMethodFilter(TestCase):
         filter.sheet('rdsheet','wtsheet_name')
         filter.row(0,1)
         filter.cell(0,1,2,3)
+        filter.set_rdsheet('rdsheet2')
         filter.finish()
         self.assertEqual(tf.called,[
             ('workbook',('rdbook','wtbook_name')),
             ('sheet',('rdsheet','wtsheet_name')),
             ('row',(0,1)),
             ('cell',(0,1,2,3)),
+            ('set_rdsheet',('rdsheet2',)),
             ('finish',()),
             ])
         
@@ -165,6 +174,7 @@ class TestMethodFilter(TestCase):
             ('sheet',('rdsheet','wtsheet_name')),
             ('row',(0,1)),
             ('cell',(0,1,2,3)),
+            ('set_rdsheet',('rdsheet2',)),
             ('finish',()),
             ])
 
@@ -189,6 +199,12 @@ class TestMethodFilter(TestCase):
         self.do_calls_and_test(OurMethodFilter(self.called,['sheet']))
         self.assertEqual(self.called,[
             ('sheet',('rdsheet','wtsheet_name')),
+            ])
+
+    def test_set_rdsheet(self):
+        self.do_calls_and_test(OurMethodFilter(self.called,['set_rdsheet']))
+        self.assertEqual(self.called,[
+            ('set_rdsheet',('rdsheet2',)),
             ])
 
     def test_row(self):
@@ -271,6 +287,99 @@ class TestMemoryLogger(TestCase):
     def test_inheritance(self):
         self.failUnless(isinstance(self.filter,MethodFilter))
 
+from xlutils.filter import ErrorFilter
+
+class TestErrorFilter(TestCase):
+
+    def test_set_rdsheet_1(self):
+        h = InstalledHandler('')
+        r = TestReader(
+            ('Sheet1',[['S1R0C0']]),
+            ('Sheet2',[[(XL_CELL_ERROR,0)]]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ErrorFilter()
+        f.next = c = TestCallable()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new')
+        f.cell(0,0,0,0)
+        f.set_rdsheet(book.sheet_by_index(1))
+        f.cell(0,0,1,0)
+        f.finish()
+        compare(self,c.called,[])
+        self.assertEqual(len(h.records),2)
+        self.assertEqual(
+            h.records[0].getMessage(),
+            "Cell A1 of sheet 'Sheet2' contains a bad value: error (#NULL!)"
+            )
+        self.assertEqual(
+            h.records[1].getMessage(),
+            'No output as errors have occurred.'
+            )
+
+    def test_set_rdsheet_2(self):
+        h = InstalledHandler('')
+        r = TestReader(
+            ('Sheet1',[['S1R0C0']]),
+            ('Sheet2',[[(XL_CELL_ERROR,0)]]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ErrorFilter()
+        f.next = c = TestCallable()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new')
+        f.cell(0,0,0,0)
+        f.cell(0,0,1,0)
+        f.finish()
+        compare(self,c.called,[
+            ('workbook', (O('xlrd.Book'), 'new.xls')),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'new')),
+            ('row', (0, 0)),
+            ('cell', (0, 0, 0, 0)),
+            ('row', (1, 1)),
+            ('cell', (1, 0, 1, 0)),
+            ('finish', ())
+            ])
+        self.assertEqual(c.called[1][1][0].name,'new')
+        self.assertEqual(len(h.records),0)
+    
+from xlutils.filter import ColumnTrimmer
+
+class TestColumnTrimmer(TestCase):
+
+    def test_set_rdsheet(self):
+        h = InstalledHandler('')
+        r = TestReader(
+            ('Sheet1',[['X',' ']]),
+            ('Sheet2',[['X','X']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ColumnTrimmer()
+        f.next = c = TestCallable()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new')
+        f.row(0,0)
+        f.cell(0,0,0,0)
+        f.set_rdsheet(book.sheet_by_index(1))
+        f.cell(0,0,0,1)
+        f.finish()
+        compare(self,c.called,[
+            ('workbook', (O('xlutils.tests.fixtures.DummyBook'), 'new.xls')),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'new')),
+            ('row', (0, 0)),
+            ('cell', (0, 0, 0, 0)),
+            ('set_rdsheet', (O('xlrd.sheet.Sheet'),)),
+            ('cell', (0, 0, 0, 1)),
+            ('finish', ())
+            ])
+        self.assertEqual(c.called[1][1][0].name,'Sheet1')
+        self.assertEqual(c.called[4][1][0].name,'Sheet2')
+        self.assertEqual(len(h.records),0)
+
+    
 class CloseableTemporaryFile:
     def __init__(self,parent,filename):
         self.file = TemporaryFile()
@@ -525,6 +634,45 @@ class TestBaseWriter(TestCase):
         self.check_file(w,os.path.join(test_files,'test.xls'),
                         18,21,38,37,8)
     
+    def test_set_rd_sheet(self):
+        # also tests that 'row' doesn't have to be called,
+        # only cell
+        r = TestReader(
+            ('Sheet1',(('S1R0C0',),
+                       ('S1R1C0',),)),
+            ('Sheet2',(('S2R0C0',),
+                       ('S2R1C0',),)),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on writer
+        w = TestWriter()
+        w.workbook(book,'new.xls')
+        w.sheet(book.sheet_by_index(0),'new')
+        w.row(0,0)
+        w.cell(0,0,0,0)
+        w.set_rdsheet(book.sheet_by_index(1))
+        w.cell(0,0,1,0)
+        w.set_rdsheet(book.sheet_by_index(0))
+        w.cell(1,0,2,0)
+        w.set_rdsheet(book.sheet_by_index(1))
+        w.cell(1,0,3,0)
+        w.finish()
+        # check everything got written and closed
+        self.assertEqual(w.files.keys(),['new.xls'])
+        self.failUnless('new.xls' in w.closed)
+        # now check the cells written
+        f = w.files['new.xls'].file
+        a = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
+        self.assertEqual(a.nsheets,1)
+        sheet = a.sheet_by_index(0)
+        self.assertEqual(sheet.nrows,4)
+        self.assertEqual(sheet.ncols,1)
+        self.assertEqual(sheet.cell(0,0).value,'S1R0C0')
+        self.assertEqual(sheet.cell(1,0).value,'S2R0C0')
+        self.assertEqual(sheet.cell(2,0).value,'S1R1C0')
+        self.assertEqual(sheet.cell(3,0).value,'S2R1C0')
+        
+    
 class TestProcess(TestCase):
 
     def test_setup(self):
@@ -547,6 +695,8 @@ def test_suite():
         makeSuite(TestMethodFilter),
         makeSuite(TestEcho),
         makeSuite(TestMemoryLogger),
+        makeSuite(TestErrorFilter),
+        makeSuite(TestColumnTrimmer),
         makeSuite(TestBaseWriter),
         makeSuite(TestProcess),
         ))

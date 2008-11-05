@@ -63,6 +63,10 @@ methods are called and then call the next filter in the chain:
 ...        print self.name,'sheet',rdsheet,wtsheet_name
 ...        self.next.sheet(rdsheet,wtsheet_name)
 ...        
+...    def set_rdsheet(self,rdsheet):
+...        print self.name,'set_rdsheet',rdsheet
+...        self.next.sheet(rdsheet,wtsheet_name)
+...        
 ...    def row(self,rdrowx,wtrowx):
 ...        print self.name,'row',rdrowx,wtrowx
 ...        self.next.row(rdrowx,wtrowx)

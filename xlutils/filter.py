@@ -92,6 +92,18 @@ class BaseFilter:
         """
         self.next.sheet(rdsheet,wtsheet_name)
        
+    def set_rdsheet(self,rdsheet):
+        """
+        The set_rdsheet method is only ever called by a filter that
+        wishes to change the source of cells mid-way through writing a
+        sheet.
+
+        rdsheet - the xlrd.sheet.Sheet object from which cells from
+                  this point forward should be read from.
+
+        """
+        self.next.set_rdsheet(rdsheet)
+       
     def row(self,rdrowx,wtrowx):
         """
         The row method is called every time processing of a new
@@ -268,7 +280,6 @@ class BaseWriter:
         self.wtsheet_name=wtsheet_name
         self.wtsheet = wtsheet = self.wtbook.add_sheet(wtsheet_name)
         self.wtcols = set() # keep track of which columns have had their attributes set up
-        self.wtrowx = -1 # assumes the output rows will be written in ascending order
         #
         # MERGEDCELLS
         # 
@@ -330,9 +341,11 @@ class BaseWriter:
         #
         wtsheet.visibility = rdsheet.visibility
        
+    def set_rdsheet(self,rdsheet):
+        self.rdsheet = rdsheet
+        
     def row(self,rdrowx,wtrowx):
-        self.wtrowx += 1
-        wtrow = self.wtrow = self.wtsheet.row(self.wtrowx)
+        wtrow = self.wtsheet.row(wtrowx)
         # empty rows may not have a rowinfo record
         rdrow = self.rdsheet.rowinfo_map.get(rdrowx)
         if rdrow:
@@ -374,7 +387,7 @@ class BaseWriter:
             rlo, rhi, clo, chi = self.merged_cell_top_left_map[rdcoords2d]
             assert (rlo, clo) == rdcoords2d
             self.wtsheet.write_merge(
-                self.wtrowx, self.wtrowx + rhi - rlo - 1,
+                wtrowx, wtrowx + rhi - rlo - 1,
                 wtcolx, wtcolx + chi - clo - 1, 
                 cell.value, style)
             return
@@ -390,16 +403,17 @@ class BaseWriter:
             # Excel will display a blank but OOo Calc and
             # Gnumeric will display the data :-(
             return
+        wtrow = self.wtsheet.row(wtrowx)
         if cty == xlrd.XL_CELL_TEXT:
-            self.wtrow.set_cell_text(wtcolx, cell.value, style)
+            wtrow.set_cell_text(wtcolx, cell.value, style)
         elif cty == xlrd.XL_CELL_NUMBER or cty == xlrd.XL_CELL_DATE:
-            self.wtrow.set_cell_number(wtcolx, cell.value, style)
+            wtrow.set_cell_number(wtcolx, cell.value, style)
         elif cty == xlrd.XL_CELL_BLANK:
-            self.wtrow.set_cell_blank(wtcolx, style)
+            wtrow.set_cell_blank(wtcolx, style)
         elif cty == xlrd.XL_CELL_BOOLEAN:
-            self.wtrow.set_cell_boolean(wtcolx, cell.value, style)
+            wtrow.set_cell_boolean(wtcolx, cell.value, style)
         elif cty == error_type:
-            self.wtrow.set_cell_error(wtcolx, cell.value, style)
+            wtrow.set_cell_error(wtcolx, cell.value, style)
         else:
             raise Exception(
                 "Unknown xlrd cell type %r with value %r at (shx=%r,rowx=%r,colx=%r)" \
@@ -447,6 +461,7 @@ class MethodFilter:
     all_methods = (
         'workbook',
         'sheet',
+        'set_rdsheet',
         'row',
         'cell',
         'finish',
@@ -537,7 +552,7 @@ class ErrorFilter(BaseReader,BaseWriter):
     def sheet(self,rdsheet,wtsheet_name):
         self.rdsheet = rdsheet
         BaseWriter.sheet(self,rdsheet,wtsheet_name)
-        
+
     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
         cell = self.rdsheet.cell(rdrowx,rdcolx)
         if cell.ctype == xlrd.XL_CELL_EMPTY:
@@ -566,15 +581,21 @@ class ColumnTrimmer(BaseFilter):
 
     rdsheet = None
 
+    pending_rdsheet = None
+
     def __init__(self,is_junk=None):
         self.is_junk = is_junk
         
     def flush(self):
         if self.rdsheet is not None:
             for wtrowx in sorted(self.rows.keys()):
-                for rdrowx,rdcolx,wtcolx in self.rows[wtrowx]:
-                    if wtcolx<=self.max_nonjunk:
-                        self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+                for e in self.rows[wtrowx]:
+                    if isinstance(e,tuple):
+                        rdrowx,rdcolx,wtcolx = e
+                        if wtcolx<=self.max_nonjunk:
+                            self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+                    else:
+                        self.next.set_rdsheet(e)
             if self.max!=self.max_nonjunk:
                 logger.debug("Number of columns trimmed from %d to %d for sheet %r",
                              self.max+1,
@@ -589,6 +610,9 @@ class ColumnTrimmer(BaseFilter):
         self.rdsheet = rdsheet
         self.next.sheet(self.rdsheet,wtsheet_name)
         
+    def set_rdsheet(self,rdsheet):
+        self.pending_rdsheet = rdsheet
+    
     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
         if wtcolx>self.max:
             self.max = wtcolx
@@ -597,6 +621,9 @@ class ColumnTrimmer(BaseFilter):
             self.max_nonjunk = wtcolx
         if wtrowx not in self.rows:
             self.rows[wtrowx]=[]
+        if self.pending_rdsheet:
+            self.rows[wtrowx].append(self.pending_rdsheet)
+            del self.pending_rdsheet
         self.rows[wtrowx].append((rdrowx,rdcolx,wtcolx))
                                                           
     def finish(self):
