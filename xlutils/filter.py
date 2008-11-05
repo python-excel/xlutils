@@ -610,7 +610,7 @@ class ColumnTrimmer(BaseFilter):
                 logger.debug("Number of columns trimmed from %d to %d for sheet %r",
                              self.max+1,
                              self.max_nonjunk+1,
-                             quoted_sheet_name(self.rdsheet.name))
+                             quoted_sheet_name(self.wtsheet_name))
         self.rows = {}
         self.max_nonjunk = 0
         self.max = 0
@@ -622,6 +622,7 @@ class ColumnTrimmer(BaseFilter):
     def sheet(self,rdsheet,wtsheet_name):
         self.flush()
         self.rdsheet = rdsheet
+        self.wtsheet_name = wtsheet_name
         self.next.sheet(self.rdsheet,wtsheet_name)
         
     def set_rdsheet(self,rdsheet):

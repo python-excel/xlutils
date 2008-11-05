@@ -410,6 +410,34 @@ class TestColumnTrimmer(TestCase):
         self.assertEqual(c.called[4][1][0].name,'Sheet2')
         self.assertEqual(len(h.records),0)
 
+    def test_use_write_sheet_name_in_logging(self):
+        h = InstalledHandler('')
+        r = TestReader(
+            ('Sheet1',[['X',' ']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ColumnTrimmer()
+        f.next = c = TestCallable()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new')
+        f.row(0,0)
+        f.cell(0,0,0,0)
+        f.cell(0,1,0,1)
+        f.finish()
+        compare(self,c.called,[
+            ('workbook', (O('xlutils.tests.fixtures.DummyBook'), 'new.xls')),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'new')),
+            ('row', (0, 0)),
+            ('cell', (0, 0, 0, 0)),
+            ('finish', ())
+            ])
+        self.assertEqual(c.called[1][1][0].name,'Sheet1')
+        self.assertEqual(len(h.records),1)
+        self.assertEqual(h.records[0].getMessage(),
+                         "Number of columns trimmed from 2 to 1 for sheet 'new'")
+        
+
     def test_multiple_books(self):
         h = InstalledHandler('')
         r = GlobReader(os.path.join(test_files,'*.xls'))
