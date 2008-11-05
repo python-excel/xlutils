@@ -379,6 +379,48 @@ class TestColumnTrimmer(TestCase):
         self.assertEqual(c.called[4][1][0].name,'Sheet2')
         self.assertEqual(len(h.records),0)
 
+    def test_multiple_books(self):
+        h = InstalledHandler('')
+        r = GlobReader(os.path.join(test_files,'*.xls'))
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ColumnTrimmer()
+        f.next = c = TestCallable()
+        r(f)
+        compare(self,c.called,[
+            ('workbook', (O('xlrd.Book'), 'test.xls')),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'Sheet1')),
+            ('row', (0, 0)),
+            ('row', (1, 1)),
+            ('cell', (0, 0, 0, 0)),('cell', (0, 1, 0, 1)),
+            ('cell', (1, 0, 1, 0)),('cell', (1, 1, 1, 1)),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'Sheet2')),
+            ('row', (0, 0)),
+            ('row', (1, 1)),
+            ('cell', (0, 0, 0, 0)),('cell', (0, 1, 0, 1)),
+            ('cell', (1, 0, 1, 0)),('cell', (1, 1, 1, 1)),
+            ('workbook', (O('xlrd.Book'), 'testall.xls')),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'Sheet1')),
+            ('row', (0, 0)),
+            ('row', (1, 1)),
+            ('row', (2, 2)),
+            ('row', (3, 3)),
+            ('row', (4, 4)),
+            ('row', (5, 5)),
+            ('cell', (0, 0, 0, 0)),('cell', (0, 1, 0, 1)),
+            ('cell', (1, 0, 1, 0)),('cell', (1, 1, 1, 1)),
+            ('cell', (2, 0, 2, 0)),('cell', (2, 1, 2, 1)),
+            ('cell', (3, 0, 3, 0)),('cell', (3, 1, 3, 1)),
+            ('cell', (4, 0, 4, 0)),('cell', (4, 1, 4, 1)),
+            ('cell', (5, 0, 5, 0)),('cell', (5, 1, 5, 1)),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'Sheet2')),
+            ('row', (0, 0)),
+            ('row', (1, 1)),
+            ('cell', (0, 0, 0, 0)),('cell', (0, 1, 0, 1)),
+            ('cell', (1, 0, 1, 0)),('cell', (1, 1, 1, 1)),
+            ('finish', ())
+            ])
+        self.assertEqual(len(h.records),0)
     
 class CloseableTemporaryFile:
     def __init__(self,parent,filename):

@@ -605,6 +605,10 @@ class ColumnTrimmer(BaseFilter):
         self.max_nonjunk = 0
         self.max = 0
                 
+    def workbook(self,rdbook,wtbook_name):
+        self.flush()
+        self.next.workbook(rdbook,wtbook_name)
+        
     def sheet(self,rdsheet,wtsheet_name):
         self.flush()
         self.rdsheet = rdsheet
@@ -621,7 +625,7 @@ class ColumnTrimmer(BaseFilter):
             self.max_nonjunk = wtcolx
         if wtrowx not in self.rows:
             self.rows[wtrowx]=[]
-        if self.pending_rdsheet:
+        if self.pending_rdsheet is not None:
             self.rows[wtrowx].append(self.pending_rdsheet)
             del self.pending_rdsheet
         self.rows[wtrowx].append((rdrowx,rdcolx,wtcolx))
