@@ -345,6 +345,37 @@ class TestErrorFilter(TestCase):
         self.assertEqual(c.called[1][1][0].name,'new')
         self.assertEqual(len(h.records),0)
     
+    def test_multiple_workbooks_with_same_name(self):
+        h = InstalledHandler('')
+        r = TestReader(
+            ('Sheet1',[['S1R0C0']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ErrorFilter()
+        f.next = c = TestCallable()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new1')
+        f.cell(0,0,0,0)
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new2')
+        f.cell(0,0,0,0)
+        f.finish()
+        compare(self,c.called,[
+            ('workbook', (O('xlrd.Book'), 'new.xls')),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'new1')),
+            ('row', (0, 0)),
+            ('cell', (0, 0, 0, 0)),
+            ('workbook', (O('xlrd.Book'), 'new.xls')),
+            ('sheet', (O('xlrd.sheet.Sheet'), u'new2')),
+            ('row', (0, 0)),
+            ('cell', (0, 0, 0, 0)),
+            ('finish', ())
+            ])
+        self.assertEqual(c.called[1][1][0].name,'new1')
+        self.assertEqual(c.called[5][1][0].name,'new2')
+        self.assertEqual(len(h.records),0)
+    
 from xlutils.filter import ColumnTrimmer
 
 class TestColumnTrimmer(TestCase):

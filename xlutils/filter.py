@@ -9,7 +9,8 @@ import os
 import xlrd,xlwt
 
 from glob import glob
-from tempfile import TemporaryFile
+from shutil import rmtree
+from tempfile import mkdtemp
 from xlutils.display import quoted_sheet_name,cell_display
 from xlutils.margins import cells_all_junk
 from xlwt.Style import default_style
@@ -526,10 +527,10 @@ class ErrorFilter(BaseReader,BaseWriter):
 
     handler = None
 
-    close_after_write = False
+    temp_path = None
+    prefix=0
     
     def __init__(self,level=logging.ERROR,message='No output as errors have occurred.'):
-        self.files = []
         self.handler = ErrorHandler()
         self.handler.setLevel(level)
         self.logger = logging.getLogger()
@@ -537,15 +538,23 @@ class ErrorFilter(BaseReader,BaseWriter):
         self.message = message
 
     def get_stream(self,filename):
-        f = TemporaryFile()
-        self.files.append((f,filename))
-        return f
+        if self.temp_path is None:
+            self.temp_path = mkdtemp()
+        self.prefix+=1
+        return open(os.path.join(self.temp_path,str(self.prefix)+'-'+filename),'wb')
 
     def get_workbooks(self):
-        for file,filename in self.files:
-            file.seek(0)
+        if self.temp_path is None:
+            return
+        filenames = []
+        for name in os.listdir(self.temp_path):
+            d = name.split('-',1)
+            d.append(name)
+            filenames.append(d)
+        filenames.sort()
+        for i,filename,pathname in filenames:
             yield (
-                xlrd.open_workbook(filename,file_contents=file.read(),pickleable=0,formatting_info=1),
+                xlrd.open_workbook(os.path.join(self.temp_path,pathname),pickleable=0,formatting_info=1),
                 filename
                 )
 
@@ -572,9 +581,10 @@ class ErrorFilter(BaseReader,BaseWriter):
             logger.error(self.message)
         else:
             self(self.next)
-        for file,filename in self.files:
-            file.close()
-        self.files = []
+        if self.temp_path is not None:
+            rmtree(self.temp_path)
+            del self.temp_path
+            self.prefix = 0
         self.handler.fired = False
 
 class ColumnTrimmer(BaseFilter):
