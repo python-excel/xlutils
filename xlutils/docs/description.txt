@@ -1,0 +1,20 @@
+-------
+xlutils
+-------
+
+This package provides a collection of utilities for working with Excel
+files. Since these utilities may require either or both of the xlrd
+and xlwt packages, they are collected together seperately here.
+
+Currently available are:
+
+margins.txt
+-----------
+
+  Tools for finding how much of an Excel file contains useful data.
+
+filter.txt
+----------
+
+  A mini framework for splitting and filtering Excel files into new
+  Excel files.
