@@ -8,13 +8,13 @@ and xlwt packages, they are collected together seperately here.
 
 Currently available are:
 
-margins.txt
------------
+xlutils.margins
+---------------
 
-  Tools for finding how much of an Excel file contains useful data.
+Tools for finding how much of an Excel file contains useful data.
 
-filter.txt
-----------
+xlutils.filter
+--------------
 
-  A mini framework for splitting and filtering Excel files into new
-  Excel files.
+A mini framework for splitting and filtering Excel files into new
+Excel files.
