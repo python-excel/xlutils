@@ -15,8 +15,8 @@ setup(
     author='Chris Withers',
     author_email='chris@simplistix.co.uk',
     license='MIT',
-    description=open(os.path.join(package_dir,'docs','description.txt')).read(),
-    long_description=open(os.path.join(package_dir,'readme.txt')).read(),
+    description="Utilities for working with Excel files that require both xlrd and xlwt",
+    long_description=open(os.path.join(package_dir,'docs','description.txt')).read(),
     url='https://secure.simplistix.co.uk/svn/xlutils/trunk',
     keywords="excel xls xlrd xlwt",
     classifiers=[
