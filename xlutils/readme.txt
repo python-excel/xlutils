@@ -42,12 +42,16 @@ The Utilities
 Each of the utilities in described in its own file found in the 'docs'
 directory of the package: 
 
-*margins.txt*
-  Tools for finding how much of an Excel file contains useful data.
+*display.txt*
+  Utility functions for displaying information about xlrd-related
+  objects in a user-friendly and safe fashion.
 
 *filter.txt*
   A mini framework for splitting and filtering Excel files into new
   Excel files.
+
+*margins.txt*
+  Tools for finding how much of an Excel file contains useful data.
 
 Development and Testing
 =======================
@@ -81,6 +85,11 @@ Credits
 
 Changes
 =======
+
+1.x.0
+-----
+
+- link to the documentation for xlutils.display
 
 1.0.0
 -----
