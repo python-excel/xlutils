@@ -198,7 +198,7 @@ class BaseWriter:
     def workbook(self,rdbook,wtbook_name):
         self.close()        
         self.rdbook = rdbook
-        self.wtbook = xlwt.Workbook()
+        self.wtbook = xlwt.Workbook(style_compression=2)
         self.wtname = wtbook_name
         self.style_list = []
         self.wtsheets = {}

@@ -512,21 +512,19 @@ class TestBaseWriter(TestCase):
             self.noted_indexes[name]={}
         mapping = self.noted_indexes[name]
         a,e = getattr(ao,name),getattr(eo,name)
-        ce = mapping.get(a)
-        if ce is not None and ce!=e:
-            self.fail(
-                ('Inconsistent %s mapping, '
-                 'first: %s->%s, second: %s->%s') % (
-                name,a,ce,a,e
-                ))
-        mapping[a]=e
+        if a not in mapping:
+            mapping[a]=set()
+        # for style compression, we may get multiple expected indexes
+        # for each actual index in the output file. We just need to make
+        # sure all the data is the same.
+        mapping.get(a).add(e)
         
     def check_file(self,writer,path,
-                   l_a_xf_list=19,
-                   l_e_xf_list=22,
+                   l_a_xf_list=18,
+                   l_e_xf_list=26,
                    l_a_format_map=38,
                    l_e_format_map=37,
-                   l_a_font_list=9,
+                   l_a_font_list=7,
                    l_e_font_list=4):
         self.noted_indexes = {}
         # now open the source file
@@ -628,83 +626,86 @@ class TestBaseWriter(TestCase):
         # but we check those copied are identical
         self.assertEqual(len(a.xf_list),l_a_xf_list)
         self.assertEqual(len(e.xf_list),l_e_xf_list)
-        for ai,ei in self.noted_indexes['xf_index'].items():
+        for ai,eis in self.noted_indexes['xf_index'].items():
             axf = a.xf_list[ai]
-            exf = e.xf_list[ei]
-            self.note_index(axf,exf,'format_key')
-            self.note_index(axf,exf,'font_index')
-            ap = axf.protection
-            ep = exf.protection
-            assertEqual(ap,ep,
-                        'cell_locked',
-                        'formula_hidden',
-                        )
-            ab = axf.border
-            eb = exf.border
-            assertEqual(ab,eb,
-                        'left_line_style',
-                        'right_line_style',
-                        'top_line_style',
-                        'bottom_line_style',
-                        'diag_line_style',
-                        'left_colour_index',
-                        'right_colour_index',
-                        'top_colour_index',
-                        'bottom_colour_index',
-                        'diag_colour_index',
-                        'diag_down',
-                        'diag_up',
-                        )
-            ab = axf.background
-            eb = exf.background
-            assertEqual(ab,eb,
-                        'fill_pattern',
-                        'pattern_colour_index',
-                        'background_colour_index',
-                        )
-            aa = axf.alignment
-            ea = exf.alignment
-            assertEqual(aa,ea,
-                        'hor_align',
-                        'vert_align',
-                        'text_direction',
-                        'rotation',
-                        'text_wrapped',
-                        'shrink_to_fit',
-                        'indent_level',
-                        )
+            for ei in eis:
+                exf = e.xf_list[ei]
+                self.note_index(axf,exf,'format_key')
+                self.note_index(axf,exf,'font_index')
+                ap = axf.protection
+                ep = exf.protection
+                assertEqual(ap,ep,
+                            'cell_locked',
+                            'formula_hidden',
+                            )
+                ab = axf.border
+                eb = exf.border
+                assertEqual(ab,eb,
+                            'left_line_style',
+                            'right_line_style',
+                            'top_line_style',
+                            'bottom_line_style',
+                            'diag_line_style',
+                            'left_colour_index',
+                            'right_colour_index',
+                            'top_colour_index',
+                            'bottom_colour_index',
+                            'diag_colour_index',
+                            'diag_down',
+                            'diag_up',
+                            )
+                ab = axf.background
+                eb = exf.background
+                assertEqual(ab,eb,
+                            'fill_pattern',
+                            'pattern_colour_index',
+                            'background_colour_index',
+                            )
+                aa = axf.alignment
+                ea = exf.alignment
+                assertEqual(aa,ea,
+                            'hor_align',
+                            'vert_align',
+                            'text_direction',
+                            'rotation',
+                            'text_wrapped',
+                            'shrink_to_fit',
+                            'indent_level',
+                            )
             
         # xlwt writes more formats than exist in an original,
         # but we check those copied are identical
         self.assertEqual(len(a.format_map),l_a_format_map)
         self.assertEqual(len(e.format_map),l_e_format_map)
-        for ai,ei in self.noted_indexes['format_key'].items():
+        for ai,eis in self.noted_indexes['format_key'].items():
             af = a.format_map[ai]
-            ef = e.format_map[ei]
-            assertEqual(af,ef,
-                        'format_str',
-                        'type')
+            for ei in eis:
+                ef = e.format_map[ei]
+                assertEqual(af,ef,
+                            'format_str',
+                            'type')
         # xlwt writes more fonts than exist in an original,
         # but we check those that exist in both...
         self.assertEqual(len(a.font_list),l_a_font_list)
         self.assertEqual(len(e.font_list),l_e_font_list)
-        for ai,ei in self.noted_indexes['font_index'].items():
+        for ai,eis in self.noted_indexes['font_index'].items():
             af = a.font_list[ai]
-            ef = e.font_list[ei]
-            assertEqual(af,ef,
-                        'height',
-                        'italic',
-                        'struck_out',
-                        'outline',
-                        'colour_index',
-                        'bold',
-                        'weight',
-                        'escapement',
-                        'underline_type',
-                        'family',
-                        'character_set',
-                        'name',
-                        )
+            for ei in eis:
+                ef = e.font_list[ei]
+                assertEqual(af,ef,
+                            'height',
+                            'italic',
+                            'struck_out',
+                            'outline',
+                            'colour_index',
+                            'bold',
+                            'weight',
+                            'escapement',
+                            'underline_type',
+                            'family',
+                            'character_set',
+                            'name',
+                            )
 
     def test_single_workbook_with_all_features(self):
         # create test reader
@@ -733,7 +734,7 @@ class TestBaseWriter(TestCase):
         self.failUnless('testall.xls' in w.closed)
         self.check_file(w,os.path.join(test_files,'testall.xls'))
         self.check_file(w,os.path.join(test_files,'test.xls'),
-                        18,21,38,37,8)
+                        18,21,38,37,7)
     
     def test_set_rd_sheet(self):
         # also tests that 'row' doesn't have to be called,
