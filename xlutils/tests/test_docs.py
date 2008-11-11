@@ -25,4 +25,5 @@ def test_suite():
         DocFileSuite('../docs/margins.txt',optionflags=options),
         DocFileSuite('../docs/filter.txt',optionflags=options,setUp=setUp,tearDown=tearDown),
         DocFileSuite('../docs/display.txt',optionflags=options),
+        DocFileSuite('../docs/styles.txt',optionflags=options,setUp=setUp,tearDown=tearDown),
         ))

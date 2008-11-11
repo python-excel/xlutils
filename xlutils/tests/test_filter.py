@@ -520,12 +520,12 @@ class TestBaseWriter(TestCase):
         mapping.get(a).add(e)
         
     def check_file(self,writer,path,
-                   l_a_xf_list=18,
+                   l_a_xf_list=20,
                    l_e_xf_list=26,
                    l_a_format_map=38,
                    l_e_format_map=37,
-                   l_a_font_list=7,
-                   l_e_font_list=4):
+                   l_a_font_list=9,
+                   l_e_font_list=7):
         self.noted_indexes = {}
         # now open the source file
         e = open_workbook(path,pickleable=0,formatting_info=1)
@@ -734,7 +734,7 @@ class TestBaseWriter(TestCase):
         self.failUnless('testall.xls' in w.closed)
         self.check_file(w,os.path.join(test_files,'testall.xls'))
         self.check_file(w,os.path.join(test_files,'test.xls'),
-                        18,21,38,37,7)
+                        18,21,38,37,7,4)
     
     def test_set_rd_sheet(self):
         # also tests that 'row' doesn't have to be called,

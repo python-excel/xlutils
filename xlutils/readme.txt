@@ -53,6 +53,9 @@ directory of the package:
 *margins.txt*
   Tools for finding how much of an Excel file contains useful data.
 
+*styles.txt*
+  Tools for working with formatting information expressed in styles.
+
 Development and Testing
 =======================
 
