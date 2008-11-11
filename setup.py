@@ -30,8 +30,8 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-    'xlrd',
-    'xlwt',
+    'xlrd >= 0.6.1a1',
+    'xlwt >= 0.7.0',
     ],
     )
 
