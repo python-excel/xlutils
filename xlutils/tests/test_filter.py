@@ -581,7 +581,10 @@ class TestBaseWriter(TestCase):
                 'nrows',
                 'ncols',
                 )
-            for col_x in range(ash.ncols):
+            # all colinfo should be copied, not just that in columns
+            # that have cells written in them.
+            self.assertEqual(len(ash.colinfo_map),len(es.colinfo_map))
+            for col_x in range(len(ash.colinfo_map)):
                 ac = ash.colinfo_map[col_x]
                 ec = es.colinfo_map[col_x]
                 assertEqual(ac,ec,

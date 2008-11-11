@@ -287,7 +287,15 @@ class BaseWriter:
         self.rdsheet = rdsheet
         self.wtsheet_name=wtsheet_name
         self.wtsheet = wtsheet = self.wtbook.add_sheet(wtsheet_name)
-        self.wtcols = set() # keep track of which columns have had their attributes set up
+        # copy column formatting from source sheet
+        for colx in range(len(self.rdsheet.colinfo_map)):
+            rdcol = self.rdsheet.colinfo_map[colx]
+            wtcol = self.wtsheet.col(colx)
+            wtcol.width = rdcol.width
+            wtcol.set_style(self.style_list[rdcol.xf_index])
+            wtcol.hidden = rdcol.hidden
+            wtcol.level = rdcol.outline_level
+            wtcol.collapsed = rdcol.collapsed
         #
         # MERGEDCELLS
         # 
@@ -370,16 +378,6 @@ class BaseWriter:
 
     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
         cell = self.rdsheet.cell(rdrowx,rdcolx)
-        # setup column attributes if not already set
-        if wtcolx not in self.wtcols and rdcolx in self.rdsheet.colinfo_map:
-            rdcol = self.rdsheet.colinfo_map[rdcolx]
-            wtcol = self.wtsheet.col(wtcolx)
-            wtcol.width = rdcol.width
-            wtcol.set_style(self.style_list[rdcol.xf_index])
-            wtcol.hidden = rdcol.hidden
-            wtcol.level = rdcol.outline_level
-            wtcol.collapsed = rdcol.collapsed
-            self.wtcols.add(wtcolx)
         # copy cell
         cty = cell.ctype
         if cty == xlrd.XL_CELL_EMPTY:
