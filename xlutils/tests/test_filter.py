@@ -774,6 +774,22 @@ class TestBaseWriter(TestCase):
         self.assertEqual(sheet.cell(2,0).value,'S1R1C0')
         self.assertEqual(sheet.cell(3,0).value,'S2R1C0')
         
+    def test_bogus_sheet_name(self):
+        r = TestReader(
+            ('sheet',([['S1R0C0']]),),
+            ('Sheet',([['S2R0C0']]),),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on writer
+        self.assertRaises(ValueError,r,TestWriter())
+    
+    def test_empty_sheet_name(self):
+        r = TestReader(
+            ('',([['S1R0C0']]),),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on writer
+        self.assertRaises(ValueError,r,TestWriter())
     
 class TestProcess(TestCase):
 

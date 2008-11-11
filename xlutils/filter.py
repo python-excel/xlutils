@@ -201,7 +201,7 @@ class BaseWriter:
         self.wtbook = xlwt.Workbook(style_compression=2)
         self.wtname = wtbook_name
         self.style_list = []
-        self.wtsheets = {}
+        self.wtsheet_names = set()
         for rdxf in rdbook.xf_list:
             wtxf = xlwt.Style.XFStyle()
             #
@@ -277,6 +277,13 @@ class BaseWriter:
             self.style_list.append(wtxf)
    
     def sheet(self,rdsheet,wtsheet_name):
+        # these checks should really be done by xlwt!
+        if not wtsheet_name:
+            raise ValueError('Empty sheet name will result in invalid Excel file!')
+        l_wtsheet_name = wtsheet_name.lower()
+        if l_wtsheet_name in self.wtsheet_names:
+            raise ValueError('A sheet named %r has already been added!'%l_wtsheet_name)
+        self.wtsheet_names.add(l_wtsheet_name)
         self.rdsheet = rdsheet
         self.wtsheet_name=wtsheet_name
         self.wtsheet = wtsheet = self.wtbook.add_sheet(wtsheet_name)
