@@ -140,6 +140,19 @@ Available Readers
   NB: You must supply a filename as shown above as the original
       filename is not stored in the xlrd.Book object
 
+  Most functionality is provided by BaseReader:
+
+  >>> isinstance(r,BaseReader)
+  True
+
+  But its get_workbooks method just returns the values it was
+  instantiated with:
+  
+  >>> tuple(r.get_workbooks())
+  ((<xlrd.Book object at ...>, 'foo.xls'),)
+  >>> tuple(r.get_workbooks())[0][0] is wb
+  True
+
   To show it working, here we send the book straight to a writer:
 
   >>> from xlutils.filter import DirectoryWriter,process
@@ -193,6 +206,15 @@ Available Writers
 
   >>> from xlutils.filter import DirectoryWriter
   >>> w = DirectoryWriter(temp_dir)
+
+  Most of the functionality is provided by BaseWriter:
+
+  >>> isinstance(w,BaseWriter)
+  True
+
+  But the get_stream method makes sure the files end up in the
+  directory specified:
+
   >>> os.listdir(temp_dir)
   []
   >>> f = w.get_stream('test.xls')
@@ -204,10 +226,46 @@ Available Writers
   'some \r\n data'
   >>> empty_temp_dir()
 
-  All the other functionality is provided by BaseWriter:
+  StreamWriter
+  ------------
+
+  If you want to write exactly one workbook to a stream, then this is
+  the writer for you:
+
+  >>> from tempfile import TemporaryFile
+  >>> from xlutils.filter import StreamWriter
+  >>> tf = TemporaryFile()
+  >>> w = StreamWriter(tf)
+
+  Most of the functionality is provided by BaseWriter:
 
   >>> isinstance(w,BaseWriter)
   True
+
+  But the get_stream method makes sure the excel data is written to
+  the stream provided:
+
+  >>> f = w.get_stream('test.xls')
+  >>> f.write('xls data')
+  >>> tf.seek(0)
+  >>> tf.read()
+  'xls data'
+
+  NB: Only one file may be written to a StreamWriter, further attempts
+  will result in an exception being raised:
+
+  >>> w.get_stream('test2.xls')
+  Traceback (most recent call last):
+  ...
+  Exception: Attempt to write more than one workbook
+
+  StreamWriter also doesn't close any streams passed to it:
+
+  >>> tf = TemporaryFile()
+  >>> process(TestReader(('Sheet1',[['R0C0']])),StreamWriter(tf))
+  >>> tf.seek(0)
+  >>> len(tf.read())
+  5632
 
   TestCallable
   ------------

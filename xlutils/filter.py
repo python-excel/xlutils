@@ -459,6 +459,20 @@ class DirectoryWriter(BaseWriter):
     def get_stream(self,filename):
         return file(os.path.join(self.dir_path,filename),'wb')
 
+class StreamWriter(BaseWriter):
+
+    fired = False
+    close_after_write = False
+    
+    def __init__(self,stream):
+        self.stream = stream
+        
+    def get_stream(self,filename):
+        if self.fired:
+            raise Exception('Attempt to write more than one workbook')
+        self.fired = True
+        return self.stream
+
 class MethodFilterMethod:
 
     def __init__(self,mf,name):
