@@ -91,6 +91,7 @@ class BaseFilter:
         wtsheet_name - the name of the sheet into which content
                        should be written.
         """
+        self.rdsheet = rdsheet
         self.next.sheet(rdsheet,wtsheet_name)
        
     def set_rdsheet(self,rdsheet):
@@ -103,6 +104,7 @@ class BaseFilter:
                   this point forward should be read from.
 
         """
+        self.rdsheet = rdsheet
         self.next.set_rdsheet(rdsheet)
        
     def row(self,rdrowx,wtrowx):
@@ -439,6 +441,15 @@ class GlobReader(BaseReader):
         
     def get_filepaths(self):
         return glob(self.spec)
+
+class XLRDReader(BaseReader):
+
+    def __init__(self,wb,filename):
+        self.wb = wb
+        self.filename = filename
+        
+    def get_workbooks(self):
+        yield (self.wb,self.filename)
 
 class DirectoryWriter(BaseWriter):
 

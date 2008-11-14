@@ -4,7 +4,7 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
-import unittest
+import os,unittest
 from fixtures import test_files
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -14,7 +14,13 @@ options = REPORT_NDIFF|ELLIPSIS
 
 def setUp(test):
     test.globs['test_files']=test_files
-    test.globs['temp_dir']=mkdtemp()
+    d = mkdtemp()
+    def empty_temp_dir():
+        files = os.listdir(d)
+        for name in files:
+            os.remove(os.path.join(d,name))
+    test.globs['temp_dir']=d
+    test.globs['empty_temp_dir']=empty_temp_dir
 
 def tearDown(test):
     rmtree(test.globs['temp_dir'])

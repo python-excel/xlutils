@@ -6,7 +6,7 @@
 
 from tempfile import TemporaryFile
 from unittest import TestSuite,TestCase,makeSuite
-from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR
+from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
 from xlutils.tests.fixtures import compare,O,TestCallable,TestCallableMethod,TestTraversable
@@ -805,6 +805,32 @@ class TestProcess(TestCase):
         F1.compare(self,[('finished',())])
         F2.compare(self,())
     
+class TestExamples(TestCase):
+
+    def test_mutate_cell(self):
+        from xlutils.filter import GlobReader,BaseFilter,process
+        class ChangeCell(BaseFilter):
+            def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
+                if self.rdsheet.name=='Sheet1' and rdrowx==0 and rdcolx==0:
+                    cell = self.rdsheet.cell(rdrowx,rdcolx)
+                    self.rdsheet.put_cell(rdrowx,rdcolx,cell.ctype,'Changed',cell.xf_index)
+                self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+        w = TestWriter()
+        process(
+            GlobReader(os.path.join(test_files,'testall.xls')),
+            ChangeCell(),
+            w
+            )
+        self.assertEqual(w.files.keys(),['testall.xls'])
+        f = w.files['testall.xls'].file
+        actual = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
+        f.close()
+        cell = actual.sheet_by_name('Sheet1').cell(0,0)
+        self.assertEqual(cell.ctype,XL_CELL_TEXT)
+        self.assertEqual(cell.value,'Changed')
+        font = actual.font_list[actual.xf_list[cell.xf_index].font_index]
+        self.assertEqual(font.underline_type,1)
+            
 def test_suite():
     return TestSuite((
         makeSuite(TestBaseReader),
@@ -817,4 +843,5 @@ def test_suite():
         makeSuite(TestColumnTrimmer),
         makeSuite(TestBaseWriter),
         makeSuite(TestProcess),
+        makeSuite(TestExamples),
         ))

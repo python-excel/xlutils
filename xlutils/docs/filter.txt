@@ -5,8 +5,8 @@ filter
 This framework is designed to filter and split Excel files using a
 series of modular readers, filters, and writers. These components are
 described below, followed by documentation for the currently available
-readers, filters and writers. Right an the bottom is an example usage
-of the filter framework.
+readers, filters and writers. Right at the bottom are examples of how
+to use the filter framework for various tasks.
 
 Readers
 =======
@@ -123,6 +123,33 @@ Available Readers
   >>> isinstance(r,BaseReader)
   True
 
+  XLRDReader
+  ----------
+
+  If you want to "save" an xlrd.Book object which you've already
+  created in some other way:
+
+  >>> from xlrd import open_workbook
+  >>> wb = open_workbook(os.path.join(test_files,'testall.xls'))
+
+  Then the XLRDReader is likely what you're after: 
+
+  >>> from xlutils.filter import XLRDReader
+  >>> r = XLRDReader(wb,'foo.xls')
+
+  NB: You must supply a filename as shown above as the original
+      filename is not stored in the xlrd.Book object
+
+  To show it working, here we send the book straight to a writer:
+
+  >>> from xlutils.filter import DirectoryWriter,process
+  >>> os.listdir(temp_dir)
+  []
+  >>> process(r,DirectoryWriter(temp_dir))
+  >>> os.listdir(temp_dir)
+  ['foo.xls']
+  >>> empty_temp_dir()
+
   TestReader
   ----------
 
@@ -175,7 +202,7 @@ Available Writers
   ['test.xls']
   >>> open(os.path.join(temp_dir,'test.xls'),'rb').read()
   'some \r\n data'
-  >>> os.remove(os.path.join(temp_dir,'test.xls'))
+  >>> empty_temp_dir()
 
   All the other functionality is provided by BaseWriter:
 
@@ -435,7 +462,7 @@ Available Filters
 
   >>> os.listdir(temp_dir)
   ['testall.xls']
-  >>> os.remove(os.path.join(temp_dir,'testall.xls'))
+  >>> empty_temp_dir()
 
   Echo
   ----
@@ -520,9 +547,31 @@ Available Filters
 Example Usage
 =============
 
-Here's a simple example that filters out odd numbered rows from an
-original workbook's sheets. It makes use of the components from the
-examples above but needs one more filter:
+Here's a simple example of how to copy a workbook changing only one
+cell in the process:
+
+>>> from xlutils.filter import GlobReader,DirectoryWriter,BaseFilter,process
+>>> class ChangeCell(BaseFilter):
+...     
+...     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
+...         if self.rdsheet.name=='Sheet1' and rdrowx==0 and rdcolx==0:
+...             cell = self.rdsheet.cell(rdrowx,rdcolx)
+...             self.rdsheet.put_cell(rdrowx,rdcolx,cell.ctype,'Changed',cell.xf_index)
+...         self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+>>> os.listdir(temp_dir)
+[]
+>>> process(
+...     GlobReader(os.path.join(test_files,'testall.xls')),
+...     ChangeCell(),
+...     DirectoryWriter(temp_dir),
+... )
+>>> os.listdir(temp_dir)
+['testall.xls']
+>>> empty_temp_dir()
+
+Here's another example that makes use of all the example components
+above to filter out odd numbered rows from an original workbook's
+sheets. To do this we need one more filter:
 
 >>> from xlutils.filter import BaseFilter
 >>> class EvenFilter(BaseFilter):
