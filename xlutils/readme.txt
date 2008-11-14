@@ -53,6 +53,9 @@ directory of the package:
 *margins.txt*
   Tools for finding how much of an Excel file contains useful data.
 
+*save.txt*
+  Tools for serializing xlrd.Book objects back to Excel files.
+
 *styles.txt*
   Tools for working with formatting information expressed in styles.
 

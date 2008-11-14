@@ -1,0 +1,25 @@
+====
+save
+====
+
+This allows serialisation of xlrd.Book objects back into binary Excel files.
+
+Here's a simple example:
+
+>>> import os
+>>> from xlrd import open_workbook
+>>> from xlutils.save import save
+>>> wb = open_workbook(os.path.join(test_files,'testall.xls'))
+>>> os.listdir(temp_dir)
+[]
+>>> save(wb,os.path.join(temp_dir,'saved.xls'))
+>>> os.listdir(temp_dir)
+['saved.xls']
+
+You can also save the data to a stream that you provide:
+
+>>> from StringIO import StringIO
+>>> s = StringIO()
+>>> save(wb,s)
+>>> len(s.getvalue())
+5632
