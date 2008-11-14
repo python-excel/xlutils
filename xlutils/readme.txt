@@ -92,10 +92,29 @@ Credits
 Changes
 =======
 
-1.x.0
+1.1.0
 -----
 
 - link to the documentation for xlutils.display
+
+- tighten up version requirements for xlrd and xlwt
+
+- use style compression in xlutils.filter.BaseWriter
+
+- prevent generation of bogus sheet names in xlutils.filter.BaseWriter
+
+- xlutils.filter.BaseFilter now keeps track of rdbook, simplifying the
+  implementation of filters.
+
+- add another example for xlutils.filter
+
+- add xlutils.filter.XLRDReader
+
+- add xlutils.filter.StreamWriter
+
+- add xlutils.styles
+
+- add xlutils.save
 
 1.0.0
 -----

@@ -8,13 +8,30 @@ and xlwt packages, they are collected together seperately here.
 
 Currently available are:
 
-xlutils.margins
+xlutils.display
 ---------------
 
-Tools for finding how much of an Excel file contains useful data.
+Utility functions for displaying information about xlrd-related
+objects in a user-friendly and safe fashion.
+
 
 xlutils.filter
 --------------
 
 A mini framework for splitting and filtering Excel files into new
 Excel files.
+
+xlutils.margins
+---------------
+
+Tools for finding how much of an Excel file contains useful data.
+
+xlutils.save
+------------
+
+Tools for serializing xlrd.Book objects back to Excel files.
+
+xlutils.styles
+--------------
+
+Tools for working with formatting information expressed in styles.
