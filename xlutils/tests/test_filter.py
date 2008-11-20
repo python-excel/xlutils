@@ -792,6 +792,27 @@ class TestBaseWriter(TestCase):
         # fire methods on writer
         self.assertRaises(ValueError,r,TestWriter())
     
+    def test_max_length_sheet_name(self):
+        name = 'X'*31
+        r = TestReader(
+            (name,([['S1R0C0']]),),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        w = TestWriter()
+        r(w)
+        self.assertEqual(w.files.keys(),['test.xls'])
+        f = w.files['test.xls'].file
+        a = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
+        self.assertEqual(a.sheet_names(),[name])
+        
+    def test_excessive_length_sheet_name(self):
+        r = TestReader(
+            ('X'*32,([['S1R0C0']]),),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on writer
+        self.assertRaises(ValueError,r,TestWriter())
+
 class TestDirectoryWriter(TestCase):
 
     def test_plus_in_workbook_name(self):
