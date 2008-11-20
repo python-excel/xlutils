@@ -4,7 +4,8 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
-from tempfile import TemporaryFile
+from shutil import rmtree
+from tempfile import TemporaryFile,mkdtemp
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process
@@ -791,6 +792,26 @@ class TestBaseWriter(TestCase):
         # fire methods on writer
         self.assertRaises(ValueError,r,TestWriter())
     
+class TestDirectoryWriter(TestCase):
+
+    def test_plus_in_workbook_name(self):
+        from xlutils.filter import DirectoryWriter
+        r = TestReader(
+            ('Sheet1',[['Cell']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on writer
+        d = mkdtemp()
+        w = DirectoryWriter(d)
+        w.workbook(book,'a+file.xls')
+        w.sheet(book.sheet_by_index(0),'new')
+        w.row(0,0)
+        w.cell(0,0,0,0)
+        w.finish()
+        # check file exists with the right name
+        self.assertEqual(os.listdir(d),['a+file.xls'])
+        rmtree(d)
+
 class TestProcess(TestCase):
 
     def test_setup(self):
@@ -842,6 +863,7 @@ def test_suite():
         makeSuite(TestErrorFilter),
         makeSuite(TestColumnTrimmer),
         makeSuite(TestBaseWriter),
+        makeSuite(TestDirectoryWriter),
         makeSuite(TestProcess),
         makeSuite(TestExamples),
         ))
