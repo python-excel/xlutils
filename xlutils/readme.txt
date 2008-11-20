@@ -92,6 +92,15 @@ Credits
 Changes
 =======
 
+1.1.1
+-----
+
+- prevented generation of excessively long sheet names that cause
+  Excel to complain.
+
+- added test that will fail if the filesystem used doesn't support
+  filenames with +'s in them.
+
 1.1.0
 -----
 
