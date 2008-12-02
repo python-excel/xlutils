@@ -4,7 +4,7 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
-class CellStyle:
+class NamedStyle:
 
     def __init__(self,name,xf):
         self.name = name
@@ -25,7 +25,7 @@ class Styles:
                 continue
             stylexfi = xf.parent_style_index
             assert stylexfi != 4095 # i.e. 0xFFF
-            self.cell_styles[xfi] = CellStyle(
+            self.cell_styles[xfi] = NamedStyle(
                 xfi_to_name[stylexfi],
                 book.xf_list[stylexfi]
                 )

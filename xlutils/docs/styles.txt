@@ -22,7 +22,11 @@ You can now look up style information about any cell:
 
 >>> sheet = book.sheet_by_name('Sheet1')
 >>> s[sheet.cell(0,0)]
-<xlutils.styles.CellStyle ...>
+<xlutils.styles.NamedStyle ...>
+
+NB: This is *not* a suitable object for copying styles to a new
+    spreadsheet using xlwt. If that is your intention, you're
+    recommended to look at xlutils.save or xlutils.filter
 
 If you open up testall.xls in Microsoft's Excel Viewer or other
 suitable software, you'll see that the following information is
@@ -32,10 +36,18 @@ correct for cell A1:
 >>> A1_style.name
 u'Style1'
 
-Most of the interesting information is in the font definition for the
-style:
+While that may be interesting, the actual style information is locked
+away in an XF record. Thankfully, a NamedStyle provides easy access to
+this:
 
->>> A1_font = book.font_list[A1_style.xf.font_index]
+>>> A1_xf = A1_style.xf
+>>> A1_xf
+<xlrd.formatting.XF ...>
+
+Once we have the XF record, for this particular cell, most of the
+interesting information is in the font definition for the style:
+
+>>> A1_font = book.font_list[A1_xf.font_index]
 
 Using the book's colour map, you can get the RGB colour for this style,
 which is blue in this case:
