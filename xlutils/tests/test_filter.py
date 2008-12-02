@@ -377,6 +377,22 @@ class TestErrorFilter(TestCase):
         self.assertEqual(c.called[5][1][0].name,'new2')
         self.assertEqual(len(h.records),0)
     
+    def test_finish_resets(self):
+        r = TestReader(
+            ('Sheet1',[[(XL_CELL_ERROR,0)]]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ErrorFilter()
+        f.next = c = TestCallable()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new1')
+        f.cell(0,0,0,0)
+        self.assertTrue(f.handler.fired)
+        f.finish()
+        compare(self,c.called,[])
+        self.assertFalse(f.handler.fired)
+    
 from xlutils.filter import ColumnTrimmer
 
 class TestColumnTrimmer(TestCase):
