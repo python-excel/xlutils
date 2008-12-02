@@ -8,30 +8,56 @@ and xlwt packages, they are collected together seperately here.
 
 Currently available are:
 
-xlutils.display
----------------
-
-Utility functions for displaying information about xlrd-related
-objects in a user-friendly and safe fashion.
+**xlutils.display**
+  Utility functions for displaying information about xlrd-related
+  objects in a user-friendly and safe fashion.
 
 
-xlutils.filter
---------------
+**xlutils.filter**
+  A mini framework for splitting and filtering Excel files into new
+  Excel files.  
 
-A mini framework for splitting and filtering Excel files into new
-Excel files.
+**xlutils.margins**
+  Tools for finding how much of an Excel file contains useful data.
 
-xlutils.margins
----------------
+**xlutils.save**
+  Tools for serializing xlrd.Book objects back to Excel files.
 
-Tools for finding how much of an Excel file contains useful data.
+**xlutils.styles**
+  Tools for working with formatting information expressed in styles.
 
-xlutils.save
+Installation
 ------------
 
-Tools for serializing xlrd.Book objects back to Excel files.
+The easyiest way to install `xlutils` is::
 
-xlutils.styles
---------------
+  easy_install xlutils
 
-Tools for working with formatting information expressed in styles.
+Or, if you're using zc.buildout, just specify 'xlutils' as 
+a required egg.
+
+However, you can also install in the usual python fashion of unpacking
+the source distribution and running::
+
+  python setup.py install
+
+If you're on Windows, you can install by running the executable
+installer, but in that case you will need to make sure the following
+are available to the Python version in which your instal `xlutils`:
+
+- **xlrd**
+   
+  You'll need version 0.6.1a1 or later. Latest versions can be found
+  here:
+
+  http://pypi.python.org/pypi/xlrd
+    
+- **xlwt**
+
+  You'll need version 0.7.0 or later. Latest versions can be found
+  here:
+
+  http://pypi.python.org/pypi/xlwt
+
+If you're installing with either easy_install or buildout, these
+dependencies will automatically be installed for you.
