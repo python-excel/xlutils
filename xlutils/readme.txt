@@ -36,6 +36,12 @@ on your PYTHONPATH:
 
   http://pypi.python.org/pypi/xlwt
 
+- **errorhandler**
+
+  This can be found here:
+
+  http://pypi.python.org/pypi/errorhandler
+
 The Utilities
 =============
 

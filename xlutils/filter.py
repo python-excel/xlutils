@@ -8,6 +8,7 @@ import logging
 import os
 import xlrd,xlwt
 
+from errorhandler import ErrorHandler
 from glob import glob
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -553,14 +554,6 @@ class MemoryLogger(MethodFilter):
         if h is not None:
             h.heap().stat.dump(self.path)
         
-
-class ErrorHandler(logging.Handler):
-
-    fired = False
-    
-    def emit(self, record):
-        self.fired=True
-
 class ErrorFilter(BaseReader,BaseWriter):
 
     handler = None
@@ -569,10 +562,7 @@ class ErrorFilter(BaseReader,BaseWriter):
     prefix=0
     
     def __init__(self,level=logging.ERROR,message='No output as errors have occurred.'):
-        self.handler = ErrorHandler()
-        self.handler.setLevel(level)
-        self.logger = logging.getLogger()
-        self.logger.addHandler(self.handler)
+        self.handler = ErrorHandler(level)
         self.message = message
 
     def get_stream(self,filename):
@@ -623,7 +613,7 @@ class ErrorFilter(BaseReader,BaseWriter):
             rmtree(self.temp_path)
             del self.temp_path
             self.prefix = 0
-        self.handler.fired = False
+        self.handler.reset()
 
 class ColumnTrimmer(BaseFilter):
 
