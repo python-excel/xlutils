@@ -98,8 +98,8 @@ Credits
 Changes
 =======
 
-1.1.1
------
+1.1.1 (20 Nov 2008)
+-------------------
 
 - prevented generation of excessively long sheet names that cause
   Excel to complain.
@@ -107,8 +107,8 @@ Changes
 - added test that will fail if the filesystem used doesn't support
   filenames with +'s in them.
 
-1.1.0
------
+1.1.0 (14 Nov 2008)
+-------------------
 
 - link to the documentation for xlutils.display
 
@@ -131,7 +131,7 @@ Changes
 
 - add xlutils.save
 
-1.0.0
------
+1.0.0 (8 Nov 2008)
+------------------
 
 - initial public release
