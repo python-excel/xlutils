@@ -4,14 +4,15 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
+from mock import Mock
 from shutil import rmtree
+from StringIO import StringIO
 from tempfile import TemporaryFile,mkdtemp
+from testfixtures import compare,Comparison as C,should_raise,replace,log_capture
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
-from xlutils.tests.fixtures import compare,O,TestCallable,TestCallableMethod,TestTraversable
-from zope.testing.loggingsupport import InstalledHandler
 
 import os
 
@@ -40,9 +41,9 @@ class TestBaseReader(TestCase):
 
     def test_no_implementation(self):
         r = BaseReader()
-        f = TestCallable()
-        self.assertRaises(NotImplementedError,r,f)
-        self.assertEqual(f.called,[])
+        f = Mock()
+        should_raise(r,NotImplementedError())(f)
+        self.assertEqual(f.method_calls,[])
         
     def test_custom_filepaths(self):
         # also tests the __call__ method
@@ -50,28 +51,28 @@ class TestBaseReader(TestCase):
             def get_filepaths(self):
                 return (test_xls_path,)
         t = TestReader()
-        f = TestCallable()
+        f = Mock()
         t(f)
-        f.compare(self,[
-            ('workbook',(O('xlrd.Book'),'test.xls')),
-            ('sheet',(O('xlrd.sheet.Sheet'),u'Sheet1')),
-            ('row',(0,0)),
-            ('cell',(0,0,0,0)),
-            ('cell',(0,1,0,1)),
-            ('row',(1,1)),
-            ('cell',(1,0,1,0)),
-            ('cell',(1,1,1,1)),
-            ('sheet',(O('xlrd.sheet.Sheet'),u'Sheet2')),
-            ('row',(0,0)),
-            ('cell',(0,0,0,0)),
-            ('cell',(0,1,0,1)),
-            ('row',(1,1)),
-            ('cell',(1,0,1,0)),
-            ('cell',(1,1,1,1)),
-            ('finish',()),
+        compare(f.method_calls,[
+            ('workbook',(C('xlrd.Book'),'test.xls'),{}),
+            ('sheet',(C('xlrd.sheet.Sheet'),u'Sheet1'),{}),
+            ('row',(0,0),{}),
+            ('cell',(0,0,0,0),{}),
+            ('cell',(0,1,0,1),{}),
+            ('row',(1,1),{}),
+            ('cell',(1,0,1,0),{}),
+            ('cell',(1,1,1,1),{}),
+            ('sheet',(C('xlrd.sheet.Sheet'),u'Sheet2'),{}),
+            ('row',(0,0),{}),
+            ('cell',(0,0,0,0),{}),
+            ('cell',(0,1,0,1),{}),
+            ('row',(1,1),{}),
+            ('cell',(1,0,1,0),{}),
+            ('cell',(1,1,1,1),{}),
+            ('finish',(),{}),
             ])
         # check we're opening things correctly
-        book = f.called[0][1][0]
+        book = f.method_calls[0][1][0]
         self.assertEqual(book.pickleable,0)
         self.assertEqual(book.formatting_info,1)
 
@@ -81,62 +82,62 @@ class TestBaseReader(TestCase):
             def get_workbooks(self):
                 yield book,'test.xls'
         t = TestReader()
-        f = TestCallable()
+        f = Mock()
         t(f)
-        f.compare(self,[
-            ('workbook',(O('xlutils.tests.fixtures.DummyBook'),'test.xls')),
-            ('sheet',(O('xlrd.sheet.Sheet'),'test sheet')),
-            ('row',(0,0)),
-            ('cell',(0,0,0,0)),
-            ('cell',(0,1,0,1)),
-            ('cell',(0,2,0,2)),
-            ('finish',()),
+        compare(f.method_calls,[
+            ('workbook',(C('xlutils.tests.fixtures.DummyBook'),'test.xls'),{}),
+            ('sheet',(C('xlrd.sheet.Sheet'),'test sheet'),{}),
+            ('row',(0,0),{}),
+            ('cell',(0,0,0,0),{}),
+            ('cell',(0,1,0,1),{}),
+            ('cell',(0,2,0,2),{}),
+            ('finish',(),{}),
             ])
         # check we're getting the right things
-        self.failUnless(f.called[0][1][0] is book)
-        self.failUnless(f.called[1][1][0] is book.sheet_by_index(0))
+        self.failUnless(f.method_calls[0][1][0] is book)
+        self.failUnless(f.method_calls[1][1][0] is book.sheet_by_index(0))
     
 class TestBaseFilter(TestCase):
 
     def setUp(self):
         from xlutils.filter import BaseFilter
         self.filter = BaseFilter()
-        self.filter.next = self.tf = TestCallable()
+        self.filter.next = self.tf = Mock()
 
     def test_workbook(self):
         self.filter.workbook('rdbook','wtbook_name')
-        self.assertEqual(self.tf.called,[
-            ('workbook',('rdbook','wtbook_name'))
+        self.assertEqual(self.tf.method_calls,[
+            ('workbook',('rdbook','wtbook_name'),{})
             ])
                          
     def test_sheet(self):
         self.filter.sheet('rdsheet','wtsheet_name')
-        self.assertEqual(self.tf.called,[
-            ('sheet',('rdsheet','wtsheet_name'))
+        self.assertEqual(self.tf.method_calls,[
+            ('sheet',('rdsheet','wtsheet_name'),{})
             ])
                          
     def test_set_rdsheet(self):
         self.filter.set_rdsheet('rdsheet2')
-        self.assertEqual(self.tf.called,[
-            ('set_rdsheet',('rdsheet2',))
+        self.assertEqual(self.tf.method_calls,[
+            ('set_rdsheet',('rdsheet2',),{})
             ])
                          
     def test_row(self):
         self.filter.row(0,1)
-        self.assertEqual(self.tf.called,[
-            ('row',(0,1))
+        self.assertEqual(self.tf.method_calls,[
+            ('row',(0,1),{})
             ])
                          
     def test_cell(self):
         self.filter.cell(0,1,2,3)
-        self.assertEqual(self.tf.called,[
-            ('cell',(0,1,2,3))
+        self.assertEqual(self.tf.method_calls,[
+            ('cell',(0,1,2,3),{})
             ])
                          
     def test_finish(self):
         self.filter.finish()
-        self.assertEqual(self.tf.called,[
-            ('finish',())
+        self.assertEqual(self.tf.method_calls,[
+            ('finish',(),{})
             ])
 
 class OurMethodFilter(MethodFilter):
@@ -152,25 +153,25 @@ class TestMethodFilter(TestCase):
         self.called = []
 
     def do_calls_and_test(self,filter):
-        filter.next = tf = TestCallable()
+        filter.next = tf = Mock()
         filter.workbook('rdbook','wtbook_name')
         filter.sheet('rdsheet','wtsheet_name')
         filter.row(0,1)
         filter.cell(0,1,2,3)
         filter.set_rdsheet('rdsheet2')
         filter.finish()
-        self.assertEqual(tf.called,[
-            ('workbook',('rdbook','wtbook_name')),
-            ('sheet',('rdsheet','wtsheet_name')),
-            ('row',(0,1)),
-            ('cell',(0,1,2,3)),
-            ('set_rdsheet',('rdsheet2',)),
-            ('finish',()),
+        self.assertEqual(tf.method_calls,[
+            ('workbook',('rdbook','wtbook_name'),{}),
+            ('sheet',('rdsheet','wtsheet_name'),{}),
+            ('row',(0,1),{}),
+            ('cell',(0,1,2,3),{}),
+            ('set_rdsheet',('rdsheet2',),{}),
+            ('finish',(),{}),
             ])
         
     def test_all(self):
         self.do_calls_and_test(OurMethodFilter(self.called))
-        self.assertEqual(self.called,[
+        compare(self.called,[
             ('workbook',('rdbook','wtbook_name')),
             ('sheet',('rdsheet','wtsheet_name')),
             ('row',(0,1)),
@@ -181,48 +182,48 @@ class TestMethodFilter(TestCase):
 
     def test_somecalls_and_test(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['row','cell']))
-        self.assertEqual(self.called,[
+        compare(self.called,[
             ('row',(0,1)),
             ('cell',(0,1,2,3)),
             ])
 
     def test_none(self):
         self.do_calls_and_test(OurMethodFilter(self.called,()))
-        self.assertEqual(self.called,[])
+        compare(self.called,[])
 
     def test_workbook(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['workbook']))
-        self.assertEqual(self.called,[
+        compare(self.called,[
             ('workbook',('rdbook','wtbook_name')),
             ])
 
     def test_sheet(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['sheet']))
-        self.assertEqual(self.called,[
+        compare(self.called,[
             ('sheet',('rdsheet','wtsheet_name')),
             ])
 
     def test_set_rdsheet(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['set_rdsheet']))
-        self.assertEqual(self.called,[
+        compare(self.called,[
             ('set_rdsheet',('rdsheet2',)),
             ])
 
     def test_row(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['row']))
-        self.assertEqual(self.called,[
+        compare(self.called,[
             ('row',(0,1)),
             ])
 
     def test_cell(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['cell']))
-        self.assertEqual(self.called,[
+        compare(self.called,[
             ('cell',(0,1,2,3)),
             ])
 
     def test_finish(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['finish']))
-        self.assertEqual(self.called,[
+        compare(self.called,[
             ('finish',()),
             ])
 
@@ -233,27 +234,17 @@ from xlutils.filter import Echo
 
 class TestEcho(TestCase):
 
-    def test_method(self):
+    @replace('sys.stdout',StringIO())
+    def test_method(self,out):
         filter = Echo(methods=['workbook'])
-        from StringIO import StringIO
-        import sys
-        try:
-            sys.stdout = out = StringIO()
-            filter.method('name','foo',1)
-        finally:
-            sys.stdout = sys.__stdout__
-        self.assertEqual(out.getvalue(),"name:('foo', 1)\n")
+        filter.method('name','foo',1)
+        compare(out.getvalue(),"name:('foo', 1)\n")
         
-    def test_method_with_name(self):
+    @replace('sys.stdout',StringIO())
+    def test_method_with_name(self,out):
         filter = Echo('echo',['workbook'])
-        from StringIO import StringIO
-        import sys
-        try:
-            sys.stdout = out = StringIO()
-            filter.method('name','foo',1)
-        finally:
-            sys.stdout = sys.__stdout__
-        self.assertEqual(out.getvalue(),"'echo' name:('foo', 1)\n")
+        filter.method('name','foo',1)
+        compare(out.getvalue(),"'echo' name:('foo', 1)\n")
         
     def test_inheritance(self):
         self.failUnless(isinstance(Echo(),MethodFilter))
@@ -264,26 +255,17 @@ class TestMemoryLogger(TestCase):
         from xlutils.filter import MemoryLogger
         self.filter = MemoryLogger('somepath',['workbook'])
 
-    def test_method(self):
-        import xlutils.filter
-        try:
-            o = xlutils.filter.h
-            xlutils.filter.h = h = TestTraversable()
-            self.filter.method('name','foo',1)
-        finally:
-            xlutils.filter.h = o
-        self.assertEqual(len(h.children),1)
-        self.assertEqual(tuple(h.children)[0].path,
-                         ".heap().stat.dump('somepath')")
+    @replace('xlutils.filter.h',Mock())
+    def test_method(self,h):
+        self.filter.method('name','foo',1)
+        # h.heap().stat.dump('somepath')
+        compare(h.method_calls,[('heap',(),{})])
+        h = h.heap.return_value
+        compare(h.method_calls,[('stat.dump', ('somepath',),{})])
     
+    @replace('xlutils.filter.h',None)
     def test_method_no_heapy(self):
-        import xlutils.filter
-        try:
-            o = xlutils.filter.h
-            xlutils.filter.h = None
-            self.filter.method('name','foo',1)
-        finally:
-            xlutils.filter.h = o
+        self.filter.method('name','foo',1)
     
     def test_inheritance(self):
         self.failUnless(isinstance(self.filter,MethodFilter))
@@ -292,8 +274,8 @@ from xlutils.filter import ErrorFilter
 
 class TestErrorFilter(TestCase):
 
-    def test_set_rdsheet_1(self):
-        h = InstalledHandler('')
+    @log_capture()
+    def test_set_rdsheet_1(self,h):
         r = TestReader(
             ('Sheet1',[['S1R0C0']]),
             ('Sheet2',[[(XL_CELL_ERROR,0)]]),
@@ -301,26 +283,21 @@ class TestErrorFilter(TestCase):
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ErrorFilter()
-        f.next = c = TestCallable()
+        f.next = c = Mock()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new')
         f.cell(0,0,0,0)
         f.set_rdsheet(book.sheet_by_index(1))
         f.cell(0,0,1,0)
         f.finish()
-        compare(self,c.called,[])
-        self.assertEqual(len(h.records),2)
-        self.assertEqual(
-            h.records[0].getMessage(),
-            "Cell A1 of sheet 'Sheet2' contains a bad value: error (#NULL!)"
-            )
-        self.assertEqual(
-            h.records[1].getMessage(),
-            'No output as errors have occurred.'
+        compare(c.method_calls,[])
+        h.check(
+            ('xlutils.filter','ERROR',"Cell A1 of sheet 'Sheet2' contains a bad value: error (#NULL!)"),
+            ('xlutils.filter','ERROR','No output as errors have occurred.'),
             )
 
-    def test_set_rdsheet_2(self):
-        h = InstalledHandler('')
+    @log_capture()
+    def test_set_rdsheet_2(self,h):
         r = TestReader(
             ('Sheet1',[['S1R0C0']]),
             ('Sheet2',[[(XL_CELL_ERROR,0)]]),
@@ -328,33 +305,32 @@ class TestErrorFilter(TestCase):
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ErrorFilter()
-        f.next = c = TestCallable()
+        f.next = c = Mock()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new')
         f.cell(0,0,0,0)
         f.cell(0,0,1,0)
         f.finish()
-        compare(self,c.called,[
-            ('workbook', (O('xlrd.Book'), 'new.xls')),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'new')),
-            ('row', (0, 0)),
-            ('cell', (0, 0, 0, 0)),
-            ('row', (1, 1)),
-            ('cell', (1, 0, 1, 0)),
-            ('finish', ())
+        compare(c.method_calls,[
+            ('workbook', (C('xlrd.Book'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='new',strict=False), u'new'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('row', (1, 1),{}),
+            ('cell', (1, 0, 1, 0),{}),
+            ('finish', (), {})
             ])
-        self.assertEqual(c.called[1][1][0].name,'new')
         self.assertEqual(len(h.records),0)
     
-    def test_multiple_workbooks_with_same_name(self):
-        h = InstalledHandler('')
+    @log_capture()
+    def test_multiple_workbooks_with_same_name(self,h):
         r = TestReader(
             ('Sheet1',[['S1R0C0']]),
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ErrorFilter()
-        f.next = c = TestCallable()
+        f.next = c = Mock()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new1')
         f.cell(0,0,0,0)
@@ -362,19 +338,17 @@ class TestErrorFilter(TestCase):
         f.sheet(book.sheet_by_index(0),'new2')
         f.cell(0,0,0,0)
         f.finish()
-        compare(self,c.called,[
-            ('workbook', (O('xlrd.Book'), 'new.xls')),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'new1')),
-            ('row', (0, 0)),
-            ('cell', (0, 0, 0, 0)),
-            ('workbook', (O('xlrd.Book'), 'new.xls')),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'new2')),
-            ('row', (0, 0)),
-            ('cell', (0, 0, 0, 0)),
-            ('finish', ())
+        compare(c.method_calls,[
+            ('workbook', (C('xlrd.Book'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='new1',strict=False), u'new1'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('workbook', (C('xlrd.Book'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='new2',strict=False), u'new2'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('finish', (), {})
             ])
-        self.assertEqual(c.called[1][1][0].name,'new1')
-        self.assertEqual(c.called[5][1][0].name,'new2')
         self.assertEqual(len(h.records),0)
     
     def test_finish_resets(self):
@@ -384,21 +358,21 @@ class TestErrorFilter(TestCase):
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ErrorFilter()
-        f.next = c = TestCallable()
+        f.next = c = Mock()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new1')
         f.cell(0,0,0,0)
         self.assertTrue(f.handler.fired)
         f.finish()
-        compare(self,c.called,[])
+        compare(c.method_calls,[])
         self.assertFalse(f.handler.fired)
     
 from xlutils.filter import ColumnTrimmer
 
 class TestColumnTrimmer(TestCase):
 
-    def test_set_rdsheet(self):
-        h = InstalledHandler('')
+    @log_capture()
+    def test_set_rdsheet(self,h):
         r = TestReader(
             ('Sheet1',[['X',' ']]),
             ('Sheet2',[['X','X']]),
@@ -406,7 +380,7 @@ class TestColumnTrimmer(TestCase):
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ColumnTrimmer()
-        f.next = c = TestCallable()
+        f.next = c = Mock()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new')
         f.row(0,0)
@@ -414,87 +388,85 @@ class TestColumnTrimmer(TestCase):
         f.set_rdsheet(book.sheet_by_index(1))
         f.cell(0,0,0,1)
         f.finish()
-        compare(self,c.called,[
-            ('workbook', (O('xlutils.tests.fixtures.DummyBook'), 'new.xls')),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'new')),
-            ('row', (0, 0)),
-            ('cell', (0, 0, 0, 0)),
-            ('set_rdsheet', (O('xlrd.sheet.Sheet'),)),
-            ('cell', (0, 0, 0, 1)),
-            ('finish', ())
+        compare(c.method_calls,[
+            ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='Sheet1',strict=False), u'new'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('set_rdsheet', (C('xlrd.sheet.Sheet',name='Sheet2',strict=False),),{}),
+            ('cell', (0, 0, 0, 1),{}),
+            ('finish', (), {})
             ])
-        self.assertEqual(c.called[1][1][0].name,'Sheet1')
-        self.assertEqual(c.called[4][1][0].name,'Sheet2')
         self.assertEqual(len(h.records),0)
 
-    def test_use_write_sheet_name_in_logging(self):
-        h = InstalledHandler('')
+    @log_capture()
+    def test_use_write_sheet_name_in_logging(self,h):
         r = TestReader(
             ('Sheet1',[['X',' ']]),
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ColumnTrimmer()
-        f.next = c = TestCallable()
+        f.next = c = Mock()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new')
         f.row(0,0)
         f.cell(0,0,0,0)
         f.cell(0,1,0,1)
         f.finish()
-        compare(self,c.called,[
-            ('workbook', (O('xlutils.tests.fixtures.DummyBook'), 'new.xls')),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'new')),
-            ('row', (0, 0)),
-            ('cell', (0, 0, 0, 0)),
-            ('finish', ())
+        compare(c.method_calls,[
+            ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='Sheet1',strict=False), u'new'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('finish', (),{})
             ])
-        self.assertEqual(c.called[1][1][0].name,'Sheet1')
-        self.assertEqual(len(h.records),1)
-        self.assertEqual(h.records[0].getMessage(),
-                         "Number of columns trimmed from 2 to 1 for sheet 'new'")
-        
+        h.check((
+            'xlutils.filter',
+            'DEBUG',
+            "Number of columns trimmed from 2 to 1 for sheet 'new'"
+                ))
 
-    def test_multiple_books(self):
-        h = InstalledHandler('')
+    @log_capture()
+    def test_multiple_books(self,h):
         r = GlobReader(os.path.join(test_files,'*.xls'))
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ColumnTrimmer()
-        f.next = c = TestCallable()
+        f.next = c = Mock()
         r(f)
-        compare(self,c.called,[
-            ('workbook', (O('xlrd.Book'), 'test.xls')),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'Sheet1')),
-            ('row', (0, 0)),
-            ('row', (1, 1)),
-            ('cell', (0, 0, 0, 0)),('cell', (0, 1, 0, 1)),
-            ('cell', (1, 0, 1, 0)),('cell', (1, 1, 1, 1)),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'Sheet2')),
-            ('row', (0, 0)),
-            ('row', (1, 1)),
-            ('cell', (0, 0, 0, 0)),('cell', (0, 1, 0, 1)),
-            ('cell', (1, 0, 1, 0)),('cell', (1, 1, 1, 1)),
-            ('workbook', (O('xlrd.Book'), 'testall.xls')),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'Sheet1')),
-            ('row', (0, 0)),
-            ('row', (1, 1)),
-            ('row', (2, 2)),
-            ('row', (3, 3)),
-            ('row', (4, 4)),
-            ('row', (5, 5)),
-            ('cell', (0, 0, 0, 0)),('cell', (0, 1, 0, 1)),
-            ('cell', (1, 0, 1, 0)),('cell', (1, 1, 1, 1)),
-            ('cell', (2, 0, 2, 0)),('cell', (2, 1, 2, 1)),
-            ('cell', (3, 0, 3, 0)),('cell', (3, 1, 3, 1)),
-            ('cell', (4, 0, 4, 0)),('cell', (4, 1, 4, 1)),
-            ('cell', (5, 0, 5, 0)),('cell', (5, 1, 5, 1)),
-            ('sheet', (O('xlrd.sheet.Sheet'), u'Sheet2')),
-            ('row', (0, 0)),
-            ('row', (1, 1)),
-            ('cell', (0, 0, 0, 0)),('cell', (0, 1, 0, 1)),
-            ('cell', (1, 0, 1, 0)),('cell', (1, 1, 1, 1)),
-            ('finish', ())
+        compare(c.method_calls,[
+            ('workbook', (C('xlrd.Book'), 'test.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet'), u'Sheet1'),{}),
+            ('row', (0, 0),{}),
+            ('row', (1, 1),{}),
+            ('cell', (0, 0, 0, 0),{}),('cell', (0, 1, 0, 1),{}),
+            ('cell', (1, 0, 1, 0),{}),('cell', (1, 1, 1, 1),{}),
+            ('sheet', (C('xlrd.sheet.Sheet'), u'Sheet2'),{}),
+            ('row', (0, 0),{}),
+            ('row', (1, 1),{}),
+            ('cell', (0, 0, 0, 0),{}),('cell', (0, 1, 0, 1),{}),
+            ('cell', (1, 0, 1, 0),{}),('cell', (1, 1, 1, 1),{}),
+            ('workbook', (C('xlrd.Book'), 'testall.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet'), u'Sheet1'),{}),
+            ('row', (0, 0),{}),
+            ('row', (1, 1),{}),
+            ('row', (2, 2),{}),
+            ('row', (3, 3),{}),
+            ('row', (4, 4),{}),
+            ('row', (5, 5),{}),
+            ('cell', (0, 0, 0, 0),{}),('cell', (0, 1, 0, 1),{}),
+            ('cell', (1, 0, 1, 0),{}),('cell', (1, 1, 1, 1),{}),
+            ('cell', (2, 0, 2, 0),{}),('cell', (2, 1, 2, 1),{}),
+            ('cell', (3, 0, 3, 0),{}),('cell', (3, 1, 3, 1),{}),
+            ('cell', (4, 0, 4, 0),{}),('cell', (4, 1, 4, 1),{}),
+            ('cell', (5, 0, 5, 0),{}),('cell', (5, 1, 5, 1),{}),
+            ('sheet', (C('xlrd.sheet.Sheet'), u'Sheet2'),{}),
+            ('row', (0, 0),{}),
+            ('row', (1, 1),{}),
+            ('cell', (0, 0, 0, 0),{}),('cell', (0, 1, 0, 1),{}),
+            ('cell', (1, 0, 1, 0),{}),('cell', (1, 1, 1, 1),{}),
+            ('finish', (), {})
             ])
         self.assertEqual(len(h.records),0)
     
@@ -569,7 +541,7 @@ class TestBaseWriter(TestCase):
             # /BUG
             
             # order doesn't matter in this list
-            compare(self,sorted(ash.merged_cells),sorted(es.merged_cells))
+            compare(sorted(ash.merged_cells),sorted(es.merged_cells))
 
             assertEqual(
                 ash,es,
@@ -855,13 +827,13 @@ class TestProcess(TestCase):
         class DummyReader:
             def __call__(self,filter):
                 filter.finished()
-        F1 = TestCallable()
-        F2 = TestCallable()
+        F1 = Mock()
+        F2 = Mock()
         process(DummyReader(),F1,F2)
         self.failUnless(F1.next is F2)
-        self.failUnless(isinstance(F2.next,TestCallableMethod))
-        F1.compare(self,[('finished',())])
-        F2.compare(self,())
+        self.failUnless(isinstance(F2.next,Mock))
+        compare(F1.method_calls,[('finished',(),{})])
+        compare(F2.method_calls,[])
     
 class TestExamples(TestCase):
 

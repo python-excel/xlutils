@@ -5,7 +5,7 @@
 # See license.txt for more details.
 
 import os
-from fixtures import TestCallable
+from mock import Mock
 from shutil import rmtree
 from StringIO import StringIO
 from tempfile import mkdtemp,TemporaryFile
@@ -17,7 +17,7 @@ class TestSave(TestCase):
 
     def test_save_path(self):
         wb = object()
-        c = TestCallable()
+        c = Mock()
         temp_dir=mkdtemp()
         path = os.path.join(temp_dir,'path.xls')
         try:
@@ -26,8 +26,8 @@ class TestSave(TestCase):
         finally:
             rmtree(temp_dir)
             save.process = process
-        self.assertEqual(len(c.called),1)
-        args = c.called[0][1]
+        self.assertEqual(len(c.call_args_list),1)
+        args = c.call_args_list[0][0]
         self.assertEqual(len(args),2)
         r = args[0]
         self.failUnless(isinstance(r,XLRDReader))
@@ -43,15 +43,15 @@ class TestSave(TestCase):
         
     def test_save_stringio(self):
         wb = object()
-        c = TestCallable()
+        c = Mock()
         s = StringIO()
         try:
             save.process = c
             save.save(wb,s)
         finally:
             save.process = process
-        self.assertEqual(len(c.called),1)
-        args = c.called[0][1]
+        self.assertEqual(len(c.call_args_list),1)
+        args = c.call_args_list[0][0]
         self.assertEqual(len(args),2)
         r = args[0]
         self.failUnless(isinstance(r,XLRDReader))
@@ -63,15 +63,15 @@ class TestSave(TestCase):
 
     def test_save_tempfile(self):
         wb = object()
-        c = TestCallable()
+        c = Mock()
         ef = TemporaryFile()
         try:
             save.process = c
             save.save(wb,ef)
         finally:
             save.process = process
-        self.assertEqual(len(c.called),1)
-        args = c.called[0][1]
+        self.assertEqual(len(c.call_args_list),1)
+        args = c.call_args_list[0][0]
         self.assertEqual(len(args),2)
         r = args[0]
         self.failUnless(isinstance(r,XLRDReader))

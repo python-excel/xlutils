@@ -8,6 +8,7 @@ import os,unittest
 from fixtures import test_files
 from shutil import rmtree
 from tempfile import mkdtemp
+from testfixtures import LogCapture
 from zope.testing.doctest import DocFileSuite, REPORT_NDIFF,ELLIPSIS
 
 options = REPORT_NDIFF|ELLIPSIS
@@ -24,6 +25,7 @@ def setUp(test):
 
 def tearDown(test):
     rmtree(test.globs['temp_dir'])
+    LogCapture.uninstall_all()
 
 def test_suite():
     return unittest.TestSuite((
