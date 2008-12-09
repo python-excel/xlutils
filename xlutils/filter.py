@@ -517,7 +517,7 @@ class MethodFilter:
         raise NotImplementedError
     
     def __init__(self,methods=True):
-        if methods==True:
+        if methods==True or methods=='True' or (len(methods)==1 and methods[0]=='True'):
             methods = self.all_methods
         for name in methods:
             if name not in self.all_methods:

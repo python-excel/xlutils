@@ -180,6 +180,28 @@ class TestMethodFilter(TestCase):
             ('finish',()),
             ])
 
+    def test_all_text(self):
+        self.do_calls_and_test(OurMethodFilter(self.called,call_on='True'))
+        compare(self.called,[
+            ('workbook',('rdbook','wtbook_name')),
+            ('sheet',('rdsheet','wtsheet_name')),
+            ('row',(0,1)),
+            ('cell',(0,1,2,3)),
+            ('set_rdsheet',('rdsheet2',)),
+            ('finish',()),
+            ])
+
+    def test_all_text_list(self):
+        self.do_calls_and_test(OurMethodFilter(self.called,call_on=['True']))
+        compare(self.called,[
+            ('workbook',('rdbook','wtbook_name')),
+            ('sheet',('rdsheet','wtsheet_name')),
+            ('row',(0,1)),
+            ('cell',(0,1,2,3)),
+            ('set_rdsheet',('rdsheet2',)),
+            ('finish',()),
+            ])
+
     def test_somecalls_and_test(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['row','cell']))
         compare(self.called,[
