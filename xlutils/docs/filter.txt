@@ -98,10 +98,11 @@ Here's an example writer that just writes the data to a temporary
 directory:
 
 >>> from xlutils.filter import BaseWriter
+>>> our_temp_dir = TempDirectory().path
 >>> class MyWriter(BaseWriter):
 ...
 ...    def get_stream(self,filename):
-...       return open(os.path.join(temp_dir,filename),'wb')
+...       return open(os.path.join(our_temp_dir,filename),'wb')
 
 Available Readers
 =================
@@ -161,7 +162,6 @@ Available Readers
   >>> process(r,DirectoryWriter(temp_dir))
   >>> os.listdir(temp_dir)
   ['foo.xls']
-  >>> empty_temp_dir()
 
   TestReader
   ----------
@@ -209,6 +209,7 @@ Available Writers
   during creation. Here's an example:
 
   >>> from xlutils.filter import DirectoryWriter
+  >>> temp_dir = TempDirectory().path
   >>> w = DirectoryWriter(temp_dir)
 
   Most of the functionality is provided by BaseWriter:
@@ -228,7 +229,6 @@ Available Writers
   ['test.xls']
   >>> open(os.path.join(temp_dir,'test.xls'),'rb').read()
   'some \r\n data'
-  >>> empty_temp_dir()
 
   StreamWriter
   ------------
@@ -494,6 +494,7 @@ Available Filters
 
   Here it is at work, starting with an empty output directory:
 
+  >>> temp_dir = TempDirectory().path
   >>> os.listdir(temp_dir)
   []
 
@@ -512,7 +513,6 @@ Available Filters
 
   >>> os.listdir(temp_dir)
   ['testall.xls']
-  >>> empty_temp_dir()
 
   Echo
   ----
@@ -608,6 +608,8 @@ cell in the process:
 ...             cell = self.rdsheet.cell(rdrowx,rdcolx)
 ...             self.rdsheet.put_cell(rdrowx,rdcolx,cell.ctype,'Changed',cell.xf_index)
 ...         self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+
+>>> temp_dir = TempDirectory().path
 >>> os.listdir(temp_dir)
 []
 >>> process(
@@ -617,7 +619,6 @@ cell in the process:
 ... )
 >>> os.listdir(temp_dir)
 ['testall.xls']
->>> empty_temp_dir()
 
 Here's another example that makes use of all the example components
 above to filter out odd numbered rows from an original workbook's
@@ -675,5 +676,5 @@ As you can see if you've read this far, there's quite a lot of output,
 but it's certainly informative! However, just to be on the safe side,
 we can see that the output file was actually written:
 
->>> os.listdir(temp_dir)
+>>> os.listdir(our_temp_dir)
 ['test.xls']

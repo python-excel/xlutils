@@ -9,23 +9,21 @@ from mock import Mock
 from shutil import rmtree
 from StringIO import StringIO
 from tempfile import mkdtemp,TemporaryFile
+from testfixtures import replace,tempdir
 from unittest import TestSuite,TestCase,makeSuite
-from xlutils import save
-from xlutils.filter import process,XLRDReader,StreamWriter
+from xlutils.save import save
+from xlutils.filter import XLRDReader,StreamWriter
 
 class TestSave(TestCase):
 
-    def test_save_path(self):
+    @tempdir()
+    @replace('xlutils.save.process',Mock())
+    def test_save_path(self,c,d):
         wb = object()
-        c = Mock()
-        temp_dir=mkdtemp()
-        path = os.path.join(temp_dir,'path.xls')
-        try:
-            save.process = c
-            save.save(wb,path)
-        finally:
-            rmtree(temp_dir)
-            save.process = process
+        path = os.path.join(d.path,'path.xls')
+        
+        save(wb,path)
+        
         self.assertEqual(len(c.call_args_list),1)
         args = c.call_args_list[0][0]
         self.assertEqual(len(args),2)
@@ -41,15 +39,13 @@ class TestSave(TestCase):
         self.assertEqual(f.mode,'wb')
         self.assertEqual(f.closed,True)
         
-    def test_save_stringio(self):
+    @replace('xlutils.save.process',Mock())
+    def test_save_stringio(self,c):
         wb = object()
-        c = Mock()
         s = StringIO()
-        try:
-            save.process = c
-            save.save(wb,s)
-        finally:
-            save.process = process
+        
+        save(wb,s)
+        
         self.assertEqual(len(c.call_args_list),1)
         args = c.call_args_list[0][0]
         self.assertEqual(len(args),2)
@@ -61,15 +57,13 @@ class TestSave(TestCase):
         self.failUnless(isinstance(w,StreamWriter))
         self.failUnless(w.stream is s)
 
-    def test_save_tempfile(self):
+    @replace('xlutils.save.process',Mock())
+    def test_save_tempfile(self,c):
         wb = object()
-        c = Mock()
         ef = TemporaryFile()
-        try:
-            save.process = c
-            save.save(wb,ef)
-        finally:
-            save.process = process
+        
+        save(wb,ef)
+        
         self.assertEqual(len(c.call_args_list),1)
         args = c.call_args_list[0][0]
         self.assertEqual(len(args),2)

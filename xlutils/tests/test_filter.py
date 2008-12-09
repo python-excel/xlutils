@@ -5,9 +5,8 @@
 # See license.txt for more details.
 
 from mock import Mock
-from shutil import rmtree
 from StringIO import StringIO
-from tempfile import TemporaryFile,mkdtemp
+from tempfile import TemporaryFile
 from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
