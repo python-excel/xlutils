@@ -8,7 +8,7 @@ from mock import Mock
 from shutil import rmtree
 from StringIO import StringIO
 from tempfile import TemporaryFile,mkdtemp
-from testfixtures import compare,Comparison as C,should_raise,replace,log_capture
+from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process
@@ -825,23 +825,22 @@ class TestBaseWriter(TestCase):
 
 class TestDirectoryWriter(TestCase):
 
-    def test_plus_in_workbook_name(self):
+    @tempdir
+    def test_plus_in_workbook_name(self,d):
         from xlutils.filter import DirectoryWriter
         r = TestReader(
             ('Sheet1',[['Cell']]),
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
-        d = mkdtemp()
-        w = DirectoryWriter(d)
+        w = DirectoryWriter(d.path)
         w.workbook(book,'a+file.xls')
         w.sheet(book.sheet_by_index(0),'new')
         w.row(0,0)
         w.cell(0,0,0,0)
         w.finish()
         # check file exists with the right name
-        self.assertEqual(os.listdir(d),['a+file.xls'])
-        rmtree(d)
+        self.assertEqual(os.listdir(d.path),['a+file.xls'])
 
 class TestProcess(TestCase):
 
