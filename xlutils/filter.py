@@ -50,6 +50,7 @@ class BaseReader:
         cells found in the Book objects returned from the
         get_workbooks method.
         """
+        filter.start()
         for workbook,filename in self.get_workbooks():
             filter.workbook(workbook,filename)
             for sheet_x in range(workbook.nsheets):
@@ -68,6 +69,26 @@ class BaseFilter:
     It can make a good base class for a new filter.
     """
 
+    def start(self):
+        """
+        This method is called before processing of a batch of input.
+        This allows the filter to initialise any required data
+        structures and dispose of any existing state from previous
+        batches. 
+
+        It is called once before the processing of any workbooks by
+        the included reader implementations.
+
+        This method can be called at any time. One common use is to
+        reset all the filters in a chain in the event of an error
+        during the processing of an rdbook.
+
+        Implementations of this method should be extremely robust and
+        must ensure that they call the reset method of the next filter
+        in the chain regardless of any work they do.
+        """
+        self.next.start()
+        
     def workbook(self,rdbook,wtbook_name):
         """
         The workbook method is called every time processing of a new
@@ -190,6 +211,9 @@ class BaseWriter:
         """
         raise NotImplementedError
 
+    def start(self):
+        self.wtbook = None
+        
     def close(self):
         if self.wtbook is not None:
             stream = self.get_stream(self.wtname)
@@ -499,6 +523,7 @@ class MethodFilter:
     """
 
     all_methods = (
+        'start',
         'workbook',
         'sheet',
         'set_rdsheet',
@@ -556,18 +581,24 @@ class MemoryLogger(MethodFilter):
         
 class ErrorFilter(BaseReader,BaseWriter):
 
-    handler = None
-
     temp_path = None
-    prefix=0
     
     def __init__(self,level=logging.ERROR,message='No output as errors have occurred.'):
         self.handler = ErrorHandler(level)
         self.message = message
 
-    def get_stream(self,filename):
-        if self.temp_path is None:
+    def start(self,create=True):
+        self.prefix = 0
+        self.handler.reset()
+        if self.temp_path is not None:
+            rmtree(self.temp_path)
+        if create:
             self.temp_path = mkdtemp()
+        else:
+            self.temp_path = None
+        BaseWriter.start(self)
+        
+    def get_stream(self,filename):
         self.prefix+=1
         return open(os.path.join(self.temp_path,str(self.prefix)+'-'+filename),'wb')
 
@@ -609,20 +640,21 @@ class ErrorFilter(BaseReader,BaseWriter):
             logger.error(self.message)
         else:
             self(self.next)
-        if self.temp_path is not None:
-            rmtree(self.temp_path)
-            del self.temp_path
-            self.prefix = 0
-        self.handler.reset()
+        self.start(create=False)
 
 class ColumnTrimmer(BaseFilter):
 
-    rdsheet = None
-
-    pending_rdsheet = None
-
     def __init__(self,is_junk=None):
         self.is_junk = is_junk
+        
+    def start(self,chain=True):
+        self.rdsheet = None
+        self.pending_rdsheet = None
+        self.rows = {}
+        self.max_nonjunk = 0
+        self.max = 0
+        if chain:
+            self.next.start()
         
     def flush(self):
         if self.rdsheet is not None:
@@ -639,9 +671,7 @@ class ColumnTrimmer(BaseFilter):
                              self.max+1,
                              self.max_nonjunk+1,
                              quoted_sheet_name(self.wtsheet_name))
-        self.rows = {}
-        self.max_nonjunk = 0
-        self.max = 0
+        self.start(chain=False)
                 
     def workbook(self,rdbook,wtbook_name):
         self.flush()
@@ -667,7 +697,7 @@ class ColumnTrimmer(BaseFilter):
             self.rows[wtrowx]=[]
         if self.pending_rdsheet is not None:
             self.rows[wtrowx].append(self.pending_rdsheet)
-            del self.pending_rdsheet
+            self.pending_rdsheet = None
         self.rows[wtrowx].append((rdrowx,rdcolx,wtcolx))
                                                           
     def finish(self):

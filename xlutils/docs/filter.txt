@@ -55,6 +55,10 @@ methods are called and then call the next filter in the chain:
 ...    def __init__(self,name):
 ...        self.name = name
 ... 
+...    def start(self):
+...        print self.name,'start'
+...        self.next.start()
+...
 ...    def workbook(self,rdbook,wtbook_name):
 ...        print self.name,'workbook',rdbook,wtbook_name
 ...        self.next.workbook(rdbook,wtbook_name)
@@ -183,7 +187,8 @@ Available Readers
   >>> c = Mock()
   >>> r(c)
   >>> pprint(c.method_calls)
-  [('workbook',
+  [('start', (), {}),
+   ('workbook',
     (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'),
     {}),
    ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'), {}),
@@ -298,7 +303,8 @@ Available Filters
   >>> c = Mock()
   >>> process(r,ColumnTrimmer(),c)
   >>> pprint(c.method_calls)
-  [('workbook',
+  [('start', (), {}),
+   ('workbook',
     (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'),
     {}),
    ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'), {}),
@@ -342,7 +348,8 @@ Available Filters
   >>> c = Mock()
   >>> process(r,ColumnTrimmer(not_useful),c)
   >>> pprint(c.method_calls)
-  [('workbook',
+  [('start', (), {}),
+   ('workbook',
     (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'),
     {}),
    ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'), {}),
@@ -416,7 +423,7 @@ Available Filters
   >>> c = Mock()
   >>> process(MyReader('test.xls'),Log(logging.WARNING),f,c)
   >>> len(c.method_calls)
-  16
+  17
 
   In addition to the logging of error messages, the following
   conditions will also cause all methods to be filtered:
@@ -474,7 +481,7 @@ Available Filters
   >>> c = Mock()
   >>> process(MyReader('test.xls'),Log(logging.DEBUG),f,c)
   >>> len(c.method_calls)
-  16
+  17
 
   An example which may prove useful is how to set up a filter such
   that if any errors are logged while processing one workbook, that
@@ -486,9 +493,11 @@ Available Filters
 
   >>> class BatchByWorkbook(BaseFilter):
   ...    started = False
+  ...    def start(self): pass
   ...    def workbook(self,rdbook,wtbook_name):
   ...       if self.started:
   ...           self.next.finish()
+  ...       self.next.start()
   ...       self.next.workbook(rdbook,wtbook_name)
   ...       self.started = True
 
@@ -532,6 +541,7 @@ Available Filters
   methods called will be printed:
 
   >>> process(r,Echo(methods=True),Mock())
+  start:()
   workbook:(<...DummyBook...>, 'test.xls')
   sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
   row:(0, 0)
@@ -546,6 +556,8 @@ Available Filters
   you can also give an Echo a name:
 
   >>> process(r,Echo('first'),Echo('second'),Mock())
+  'first' start:()
+  'second' start:()
   'first' workbook:(<...DummyBook...>, 'test.xls')
   'second' workbook:(<...DummyBook...>, 'test.xls')
   'first' sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
@@ -645,6 +657,8 @@ Now we can put it all together with a call to the process function:
 ...     MyFilter('after'),
 ...     MyWriter()
 ...     )
+before start
+after start
 before workbook <xlrd.Book object at ...> test.xls
 after workbook <xlrd.Book object at ...> test.xls
 before sheet <xlrd.sheet.Sheet object at ...> Sheet1
