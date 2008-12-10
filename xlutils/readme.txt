@@ -16,9 +16,10 @@ The easyiest way to install xlutils is:
 Or, if you're using zc.buildout, just specify 'xlutils' as 
 a required egg.
 
-However, you can also install by unpacking the source
-distribution and placing the 'xlutils' folder somewhere on your 
-PYTHONPATH.
+However, you can also install in the usual python fashion of unpacking
+the source distribution and running::
+
+  python setup.py install
 
 If you do not install using easy_install or zc.buildout, you will 
 also need to make sure the following python packages are available 
@@ -97,6 +98,24 @@ Credits
 
 Changes
 =======
+
+1.2.0 (10 Dec 2008)
+-------------------
+
+- add and implement `start` method to components in xlutils.filter.
+
+- fixed bug when using set_rdsheet with ColumnTrimmer.
+
+- improved installation documentation.
+
+- renamed xlutils.styles.CellStyle to more appropriate
+  xlutils.styles.NamedStyle.
+
+- improved documentation for xlutils.styles.
+
+- moved to using TestFixtures and Mock for tests.
+
+- moved to using ErrorHandler rather than duplicating code.
 
 1.1.1 (20 Nov 2008)
 -------------------

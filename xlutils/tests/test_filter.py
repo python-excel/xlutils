@@ -5,10 +5,9 @@
 # See license.txt for more details.
 
 from mock import Mock
-from shutil import rmtree
 from StringIO import StringIO
-from tempfile import TemporaryFile,mkdtemp
-from testfixtures import compare,Comparison as C,should_raise,replace,log_capture
+from tempfile import TemporaryFile
+from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process
@@ -43,7 +42,7 @@ class TestBaseReader(TestCase):
         r = BaseReader()
         f = Mock()
         should_raise(r,NotImplementedError())(f)
-        self.assertEqual(f.method_calls,[])
+        self.assertEqual(f.method_calls,[('start',(),{})])
         
     def test_custom_filepaths(self):
         # also tests the __call__ method
@@ -54,7 +53,11 @@ class TestBaseReader(TestCase):
         f = Mock()
         t(f)
         compare(f.method_calls,[
-            ('workbook',(C('xlrd.Book'),'test.xls'),{}),
+            ('start',(),{}),
+            ('workbook',(C('xlrd.Book',
+                           pickleable=0,
+                           formatting_info=1,
+                           strict=False),'test.xls'),{}),
             ('sheet',(C('xlrd.sheet.Sheet'),u'Sheet1'),{}),
             ('row',(0,0),{}),
             ('cell',(0,0,0,0),{}),
@@ -71,10 +74,6 @@ class TestBaseReader(TestCase):
             ('cell',(1,1,1,1),{}),
             ('finish',(),{}),
             ])
-        # check we're opening things correctly
-        book = f.method_calls[0][1][0]
-        self.assertEqual(book.pickleable,0)
-        self.assertEqual(book.formatting_info,1)
 
     def test_custom_getworkbooks(self):
         book = make_book((('1','2','3'),))
@@ -85,6 +84,7 @@ class TestBaseReader(TestCase):
         f = Mock()
         t(f)
         compare(f.method_calls,[
+            ('start',(),{}),
             ('workbook',(C('xlutils.tests.fixtures.DummyBook'),'test.xls'),{}),
             ('sheet',(C('xlrd.sheet.Sheet'),'test sheet'),{}),
             ('row',(0,0),{}),
@@ -94,8 +94,8 @@ class TestBaseReader(TestCase):
             ('finish',(),{}),
             ])
         # check we're getting the right things
-        self.failUnless(f.method_calls[0][1][0] is book)
-        self.failUnless(f.method_calls[1][1][0] is book.sheet_by_index(0))
+        self.failUnless(f.method_calls[1][1][0] is book)
+        self.failUnless(f.method_calls[2][1][0] is book.sheet_by_index(0))
     
 class TestBaseFilter(TestCase):
 
@@ -104,6 +104,12 @@ class TestBaseFilter(TestCase):
         self.filter = BaseFilter()
         self.filter.next = self.tf = Mock()
 
+    def test_start(self):
+        self.filter.start()
+        self.assertEqual(self.tf.method_calls,[
+            ('start',(),{})
+            ])
+                         
     def test_workbook(self):
         self.filter.workbook('rdbook','wtbook_name')
         self.assertEqual(self.tf.method_calls,[
@@ -154,6 +160,7 @@ class TestMethodFilter(TestCase):
 
     def do_calls_and_test(self,filter):
         filter.next = tf = Mock()
+        filter.start()
         filter.workbook('rdbook','wtbook_name')
         filter.sheet('rdsheet','wtsheet_name')
         filter.row(0,1)
@@ -161,6 +168,7 @@ class TestMethodFilter(TestCase):
         filter.set_rdsheet('rdsheet2')
         filter.finish()
         self.assertEqual(tf.method_calls,[
+            ('start',(),{}),
             ('workbook',('rdbook','wtbook_name'),{}),
             ('sheet',('rdsheet','wtsheet_name'),{}),
             ('row',(0,1),{}),
@@ -172,6 +180,31 @@ class TestMethodFilter(TestCase):
     def test_all(self):
         self.do_calls_and_test(OurMethodFilter(self.called))
         compare(self.called,[
+            ('start',()),
+            ('workbook',('rdbook','wtbook_name')),
+            ('sheet',('rdsheet','wtsheet_name')),
+            ('row',(0,1)),
+            ('cell',(0,1,2,3)),
+            ('set_rdsheet',('rdsheet2',)),
+            ('finish',()),
+            ])
+
+    def test_all_text(self):
+        self.do_calls_and_test(OurMethodFilter(self.called,call_on='True'))
+        compare(self.called,[
+            ('start',()),
+            ('workbook',('rdbook','wtbook_name')),
+            ('sheet',('rdsheet','wtsheet_name')),
+            ('row',(0,1)),
+            ('cell',(0,1,2,3)),
+            ('set_rdsheet',('rdsheet2',)),
+            ('finish',()),
+            ])
+
+    def test_all_text_list(self):
+        self.do_calls_and_test(OurMethodFilter(self.called,call_on=['True']))
+        compare(self.called,[
+            ('start',()),
             ('workbook',('rdbook','wtbook_name')),
             ('sheet',('rdsheet','wtsheet_name')),
             ('row',(0,1)),
@@ -190,6 +223,12 @@ class TestMethodFilter(TestCase):
     def test_none(self):
         self.do_calls_and_test(OurMethodFilter(self.called,()))
         compare(self.called,[])
+
+    def test_start(self):
+        self.do_calls_and_test(OurMethodFilter(self.called,['start']))
+        compare(self.called,[
+            ('start',()),
+            ])
 
     def test_workbook(self):
         self.do_calls_and_test(OurMethodFilter(self.called,['workbook']))
@@ -228,7 +267,8 @@ class TestMethodFilter(TestCase):
             ])
 
     def test_invalid(self):
-        self.assertRaises(Exception,OurMethodFilter,self.called,['foo'])
+        m = should_raise(OurMethodFilter,ValueError("'foo' is not a valid method name"))        
+        m(self.called,['foo'])
     
 from xlutils.filter import Echo
 
@@ -284,6 +324,7 @@ class TestErrorFilter(TestCase):
         # fire methods on filter
         f = ErrorFilter()
         f.next = c = Mock()
+        f.start()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new')
         f.cell(0,0,0,0)
@@ -306,12 +347,14 @@ class TestErrorFilter(TestCase):
         # fire methods on filter
         f = ErrorFilter()
         f.next = c = Mock()
+        f.start()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new')
         f.cell(0,0,0,0)
         f.cell(0,0,1,0)
         f.finish()
         compare(c.method_calls,[
+            ('start', (), {}),
             ('workbook', (C('xlrd.Book'), 'new.xls'),{}),
             ('sheet', (C('xlrd.sheet.Sheet',name='new',strict=False), u'new'),{}),
             ('row', (0, 0),{}),
@@ -331,6 +374,7 @@ class TestErrorFilter(TestCase):
         # fire methods on filter
         f = ErrorFilter()
         f.next = c = Mock()
+        f.start()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new1')
         f.cell(0,0,0,0)
@@ -339,6 +383,7 @@ class TestErrorFilter(TestCase):
         f.cell(0,0,0,0)
         f.finish()
         compare(c.method_calls,[
+            ('start', (), {}),
             ('workbook', (C('xlrd.Book'), 'new.xls'),{}),
             ('sheet', (C('xlrd.sheet.Sheet',name='new1',strict=False), u'new1'),{}),
             ('row', (0, 0),{}),
@@ -352,6 +397,7 @@ class TestErrorFilter(TestCase):
         self.assertEqual(len(h.records),0)
     
     def test_finish_resets(self):
+        # ...that's `start`s job!
         r = TestReader(
             ('Sheet1',[[(XL_CELL_ERROR,0)]]),
             )
@@ -359,6 +405,7 @@ class TestErrorFilter(TestCase):
         # fire methods on filter
         f = ErrorFilter()
         f.next = c = Mock()
+        f.start()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new1')
         f.cell(0,0,0,0)
@@ -366,13 +413,41 @@ class TestErrorFilter(TestCase):
         f.finish()
         compare(c.method_calls,[])
         self.assertFalse(f.handler.fired)
-    
+        compare(f.temp_path,None)
+
+    @tempdir()
+    def test_start(self,d):
+        f = ErrorFilter()
+        f.next = m = Mock()
+        f.wtbook = 'junk'
+        f.handler.fired = 'junk'
+        f.temp_path = d.path
+        f.prefix = 'junk'
+        j = open(os.path.join(d.path,'junk.xls'),'wb')
+        j.write('junk')
+        j.close()
+
+        f.start()
+
+        compare(f.wtbook,None)
+        compare(f.handler.fired,False)
+        self.failIf(os.path.exists(d.path))
+        compare(os.listdir(f.temp_path),[])
+        compare(f.prefix,0)
+
+        f.finish()
+        
+        compare(m.method_calls,[
+            ('start', (), {}),
+            ('finish', (), {})
+            ])
+
 from xlutils.filter import ColumnTrimmer
 
 class TestColumnTrimmer(TestCase):
 
     @log_capture()
-    def test_set_rdsheet(self,h):
+    def test_set_rdsheet_cols(self,h):
         r = TestReader(
             ('Sheet1',[['X',' ']]),
             ('Sheet2',[['X','X']]),
@@ -381,6 +456,7 @@ class TestColumnTrimmer(TestCase):
         # fire methods on filter
         f = ColumnTrimmer()
         f.next = c = Mock()
+        f.start()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new')
         f.row(0,0)
@@ -389,6 +465,7 @@ class TestColumnTrimmer(TestCase):
         f.cell(0,0,0,1)
         f.finish()
         compare(c.method_calls,[
+            ('start', (), {}),
             ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'new.xls'),{}),
             ('sheet', (C('xlrd.sheet.Sheet',name='Sheet1',strict=False), u'new'),{}),
             ('row', (0, 0),{}),
@@ -399,6 +476,66 @@ class TestColumnTrimmer(TestCase):
             ])
         self.assertEqual(len(h.records),0)
 
+    def test_set_rdsheet_rows(self):
+        r = TestReader(
+            ('Sheet1',[['X',' ']]),
+            ('Sheet2',[['X','X'],['X','X'],['X','X']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ColumnTrimmer()
+        f.next = c = Mock()
+        f.start()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new')
+        f.row(0,0)
+        f.cell(0,0,0,0)
+        f.set_rdsheet(book.sheet_by_index(1))
+        f.cell(2,0,1,0)
+        f.finish()
+        compare(c.method_calls,[
+            ('start', (), {}),
+            ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='Sheet1',strict=False), u'new'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('set_rdsheet', (C('xlrd.sheet.Sheet',name='Sheet2',strict=False),),{}),
+            ('cell', (2, 0, 1, 0),{}),
+            ('finish', (), {})
+            ])
+
+    def test_set_rdsheet_trim(self):
+        r = TestReader(
+            ('Sheet1',[['X',' ']]),
+            ('Sheet2',[['X','X']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ColumnTrimmer()
+        f.next = c = Mock()
+        f.start()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new')
+        f.row(0,0)
+        f.cell(0,0,0,0)
+        f.cell(0,1,0,1)
+        f.set_rdsheet(book.sheet_by_index(1))
+        f.cell(0,0,1,0)
+        f.cell(0,1,1,1)
+        f.finish()
+        compare(c.method_calls,[
+            ('start', (), {}),
+            ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='Sheet1',strict=False), u'new'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('cell', (0, 1, 0, 1),{}),
+            ('set_rdsheet', (C('xlrd.sheet.Sheet',name='Sheet2',strict=False),),{}),
+            ('cell', (0, 0, 1, 0),{}),
+            ('cell', (0, 1, 1, 1),{}),
+            ('finish', (), {})
+            ])
+
     @log_capture()
     def test_use_write_sheet_name_in_logging(self,h):
         r = TestReader(
@@ -408,6 +545,7 @@ class TestColumnTrimmer(TestCase):
         # fire methods on filter
         f = ColumnTrimmer()
         f.next = c = Mock()
+        f.start()
         f.workbook(book,'new.xls')
         f.sheet(book.sheet_by_index(0),'new')
         f.row(0,0)
@@ -415,6 +553,7 @@ class TestColumnTrimmer(TestCase):
         f.cell(0,1,0,1)
         f.finish()
         compare(c.method_calls,[
+            ('start', (), {}),
             ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'new.xls'),{}),
             ('sheet', (C('xlrd.sheet.Sheet',name='Sheet1',strict=False), u'new'),{}),
             ('row', (0, 0),{}),
@@ -436,6 +575,7 @@ class TestColumnTrimmer(TestCase):
         f.next = c = Mock()
         r(f)
         compare(c.method_calls,[
+            ('start', (), {}),
             ('workbook', (C('xlrd.Book'), 'test.xls'),{}),
             ('sheet', (C('xlrd.sheet.Sheet'), u'Sheet1'),{}),
             ('row', (0, 0),{}),
@@ -469,6 +609,27 @@ class TestColumnTrimmer(TestCase):
             ('finish', (), {})
             ])
         self.assertEqual(len(h.records),0)
+
+    def test_start(self):
+        f = ColumnTrimmer()
+        f.next = m = Mock()
+        f.rdsheet = 'junk'
+        f.pending_rdsheet = 'junk'
+        f.rows = 'junk'
+        f.max_nonjunk = 'junk'
+        f.max = 'junk'
+
+        f.start()
+
+        compare(f.rdsheet,None)
+        compare(f.pending_rdsheet,None)
+        compare(f.rows,{})
+        compare(f.max_nonjunk,0)
+        compare(f.max,0)
+
+        compare(m.method_calls,[
+            ('start', (), {})
+            ])
     
 class CloseableTemporaryFile:
     def __init__(self,parent,filename):
@@ -737,6 +898,7 @@ class TestBaseWriter(TestCase):
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
         w = TestWriter()
+        w.start()
         w.workbook(book,'new.xls')
         w.sheet(book.sheet_by_index(0),'new')
         w.row(0,0)
@@ -763,6 +925,12 @@ class TestBaseWriter(TestCase):
         self.assertEqual(sheet.cell(2,0).value,'S1R1C0')
         self.assertEqual(sheet.cell(3,0).value,'S2R1C0')
         
+    def test_start(self):
+        w = TestWriter()
+        w.wtbook = 'junk'
+        w.start()
+        compare(w.wtbook,None)
+    
     def test_bogus_sheet_name(self):
         r = TestReader(
             ('sheet',([['S1R0C0']]),),
@@ -770,7 +938,9 @@ class TestBaseWriter(TestCase):
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
-        self.assertRaises(ValueError,r,TestWriter())
+        should_raise(r,ValueError(
+            "A sheet named 'sheet' has already been added!"
+            ))(TestWriter())
     
     def test_empty_sheet_name(self):
         r = TestReader(
@@ -778,7 +948,9 @@ class TestBaseWriter(TestCase):
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
-        self.assertRaises(ValueError,r,TestWriter())
+        should_raise(r,ValueError(
+            'Empty sheet name will result in invalid Excel file!'
+            ))(TestWriter())
     
     def test_max_length_sheet_name(self):
         name = 'X'*31
@@ -799,27 +971,30 @@ class TestBaseWriter(TestCase):
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
-        self.assertRaises(ValueError,r,TestWriter())
+        should_raise(r,ValueError(
+            'Sheet name cannot be more than 31 characters long, '
+            'supplied name was 32 characters long!'
+            ))(TestWriter())
 
 class TestDirectoryWriter(TestCase):
 
-    def test_plus_in_workbook_name(self):
+    @tempdir
+    def test_plus_in_workbook_name(self,d):
         from xlutils.filter import DirectoryWriter
         r = TestReader(
             ('Sheet1',[['Cell']]),
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
-        d = mkdtemp()
-        w = DirectoryWriter(d)
+        w = DirectoryWriter(d.path)
+        w.start()
         w.workbook(book,'a+file.xls')
         w.sheet(book.sheet_by_index(0),'new')
         w.row(0,0)
         w.cell(0,0,0,0)
         w.finish()
         # check file exists with the right name
-        self.assertEqual(os.listdir(d),['a+file.xls'])
-        rmtree(d)
+        self.assertEqual(os.listdir(d.path),['a+file.xls'])
 
 class TestProcess(TestCase):
 

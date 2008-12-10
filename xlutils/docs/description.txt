@@ -41,9 +41,9 @@ the source distribution and running::
 
   python setup.py install
 
-If you're on Windows, you can install by running the executable
-installer, but in that case you will need to make sure the following
-are available to the Python version in which your instal `xlutils`:
+If you do not install using easy_install or zc.buildout, you will 
+also need to make sure the following python packages are available 
+on your PYTHONPATH:
 
 - **xlrd**
    
@@ -58,6 +58,12 @@ are available to the Python version in which your instal `xlutils`:
   here:
 
   http://pypi.python.org/pypi/xlwt
+
+- **errorhandler**
+
+  This can be found here:
+
+  http://pypi.python.org/pypi/errorhandler
 
 If you're installing with either easy_install or buildout, these
 dependencies will automatically be installed for you.

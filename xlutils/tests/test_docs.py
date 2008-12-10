@@ -6,25 +6,18 @@
 
 import os,unittest
 from fixtures import test_files
-from shutil import rmtree
-from tempfile import mkdtemp
-from testfixtures import LogCapture
+from testfixtures import LogCapture,TempDirectory
 from zope.testing.doctest import DocFileSuite, REPORT_NDIFF,ELLIPSIS
 
 options = REPORT_NDIFF|ELLIPSIS
 
 def setUp(test):
     test.globs['test_files']=test_files
-    d = mkdtemp()
-    def empty_temp_dir():
-        files = os.listdir(d)
-        for name in files:
-            os.remove(os.path.join(d,name))
-    test.globs['temp_dir']=d
-    test.globs['empty_temp_dir']=empty_temp_dir
+    test.globs['temp_dir']=TempDirectory().path
+    test.globs['TempDirectory']=TempDirectory
 
 def tearDown(test):
-    rmtree(test.globs['temp_dir'])
+    TempDirectory.cleanup_all()
     LogCapture.uninstall_all()
 
 def test_suite():

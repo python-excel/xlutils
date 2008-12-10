@@ -55,6 +55,10 @@ methods are called and then call the next filter in the chain:
 ...    def __init__(self,name):
 ...        self.name = name
 ... 
+...    def start(self):
+...        print self.name,'start'
+...        self.next.start()
+...
 ...    def workbook(self,rdbook,wtbook_name):
 ...        print self.name,'workbook',rdbook,wtbook_name
 ...        self.next.workbook(rdbook,wtbook_name)
@@ -98,10 +102,11 @@ Here's an example writer that just writes the data to a temporary
 directory:
 
 >>> from xlutils.filter import BaseWriter
+>>> our_temp_dir = TempDirectory().path
 >>> class MyWriter(BaseWriter):
 ...
 ...    def get_stream(self,filename):
-...       return open(os.path.join(temp_dir,filename),'wb')
+...       return open(os.path.join(our_temp_dir,filename),'wb')
 
 Available Readers
 =================
@@ -161,7 +166,6 @@ Available Readers
   >>> process(r,DirectoryWriter(temp_dir))
   >>> os.listdir(temp_dir)
   ['foo.xls']
-  >>> empty_temp_dir()
 
   TestReader
   ----------
@@ -183,7 +187,8 @@ Available Readers
   >>> c = Mock()
   >>> r(c)
   >>> pprint(c.method_calls)
-  [('workbook',
+  [('start', (), {}),
+   ('workbook',
     (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'),
     {}),
    ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'), {}),
@@ -209,6 +214,7 @@ Available Writers
   during creation. Here's an example:
 
   >>> from xlutils.filter import DirectoryWriter
+  >>> temp_dir = TempDirectory().path
   >>> w = DirectoryWriter(temp_dir)
 
   Most of the functionality is provided by BaseWriter:
@@ -228,7 +234,6 @@ Available Writers
   ['test.xls']
   >>> open(os.path.join(temp_dir,'test.xls'),'rb').read()
   'some \r\n data'
-  >>> empty_temp_dir()
 
   StreamWriter
   ------------
@@ -298,7 +303,8 @@ Available Filters
   >>> c = Mock()
   >>> process(r,ColumnTrimmer(),c)
   >>> pprint(c.method_calls)
-  [('workbook',
+  [('start', (), {}),
+   ('workbook',
     (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'),
     {}),
    ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'), {}),
@@ -342,7 +348,8 @@ Available Filters
   >>> c = Mock()
   >>> process(r,ColumnTrimmer(not_useful),c)
   >>> pprint(c.method_calls)
-  [('workbook',
+  [('start', (), {}),
+   ('workbook',
     (<xlutils.tests.fixtures.DummyBook...>, 'test.xls'),
     {}),
    ('sheet', (<xlrd.sheet.Sheet...>, 'Sheet1'), {}),
@@ -416,7 +423,7 @@ Available Filters
   >>> c = Mock()
   >>> process(MyReader('test.xls'),Log(logging.WARNING),f,c)
   >>> len(c.method_calls)
-  16
+  17
 
   In addition to the logging of error messages, the following
   conditions will also cause all methods to be filtered:
@@ -474,7 +481,7 @@ Available Filters
   >>> c = Mock()
   >>> process(MyReader('test.xls'),Log(logging.DEBUG),f,c)
   >>> len(c.method_calls)
-  16
+  17
 
   An example which may prove useful is how to set up a filter such
   that if any errors are logged while processing one workbook, that
@@ -486,14 +493,17 @@ Available Filters
 
   >>> class BatchByWorkbook(BaseFilter):
   ...    started = False
+  ...    def start(self): pass
   ...    def workbook(self,rdbook,wtbook_name):
   ...       if self.started:
   ...           self.next.finish()
+  ...       self.next.start()
   ...       self.next.workbook(rdbook,wtbook_name)
   ...       self.started = True
 
   Here it is at work, starting with an empty output directory:
 
+  >>> temp_dir = TempDirectory().path
   >>> os.listdir(temp_dir)
   []
 
@@ -512,7 +522,6 @@ Available Filters
 
   >>> os.listdir(temp_dir)
   ['testall.xls']
-  >>> empty_temp_dir()
 
   Echo
   ----
@@ -532,6 +541,7 @@ Available Filters
   methods called will be printed:
 
   >>> process(r,Echo(methods=True),Mock())
+  start:()
   workbook:(<...DummyBook...>, 'test.xls')
   sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
   row:(0, 0)
@@ -546,6 +556,8 @@ Available Filters
   you can also give an Echo a name:
 
   >>> process(r,Echo('first'),Echo('second'),Mock())
+  'first' start:()
+  'second' start:()
   'first' workbook:(<...DummyBook...>, 'test.xls')
   'second' workbook:(<...DummyBook...>, 'test.xls')
   'first' sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
@@ -608,6 +620,8 @@ cell in the process:
 ...             cell = self.rdsheet.cell(rdrowx,rdcolx)
 ...             self.rdsheet.put_cell(rdrowx,rdcolx,cell.ctype,'Changed',cell.xf_index)
 ...         self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+
+>>> temp_dir = TempDirectory().path
 >>> os.listdir(temp_dir)
 []
 >>> process(
@@ -617,7 +631,6 @@ cell in the process:
 ... )
 >>> os.listdir(temp_dir)
 ['testall.xls']
->>> empty_temp_dir()
 
 Here's another example that makes use of all the example components
 above to filter out odd numbered rows from an original workbook's
@@ -644,6 +657,8 @@ Now we can put it all together with a call to the process function:
 ...     MyFilter('after'),
 ...     MyWriter()
 ...     )
+before start
+after start
 before workbook <xlrd.Book object at ...> test.xls
 after workbook <xlrd.Book object at ...> test.xls
 before sheet <xlrd.sheet.Sheet object at ...> Sheet1
@@ -675,5 +690,5 @@ As you can see if you've read this far, there's quite a lot of output,
 but it's certainly informative! However, just to be on the safe side,
 we can see that the output file was actually written:
 
->>> os.listdir(temp_dir)
+>>> os.listdir(our_temp_dir)
 ['test.xls']
