@@ -655,6 +655,7 @@ class ColumnTrimmer(BaseFilter):
         
     def set_rdsheet(self,rdsheet):
         self.pending_rdsheet = rdsheet
+        self.rdsheet = rdsheet
     
     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
         if wtcolx>self.max:

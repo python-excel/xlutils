@@ -393,7 +393,7 @@ from xlutils.filter import ColumnTrimmer
 class TestColumnTrimmer(TestCase):
 
     @log_capture()
-    def test_set_rdsheet(self,h):
+    def test_set_rdsheet_cols(self,h):
         r = TestReader(
             ('Sheet1',[['X',' ']]),
             ('Sheet2',[['X','X']]),
@@ -419,6 +419,62 @@ class TestColumnTrimmer(TestCase):
             ('finish', (), {})
             ])
         self.assertEqual(len(h.records),0)
+
+    def test_set_rdsheet_rows(self):
+        r = TestReader(
+            ('Sheet1',[['X',' ']]),
+            ('Sheet2',[['X','X'],['X','X'],['X','X']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ColumnTrimmer()
+        f.next = c = Mock()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new')
+        f.row(0,0)
+        f.cell(0,0,0,0)
+        f.set_rdsheet(book.sheet_by_index(1))
+        f.cell(2,0,1,0)
+        f.finish()
+        compare(c.method_calls,[
+            ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='Sheet1',strict=False), u'new'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('set_rdsheet', (C('xlrd.sheet.Sheet',name='Sheet2',strict=False),),{}),
+            ('cell', (2, 0, 1, 0),{}),
+            ('finish', (), {})
+            ])
+
+    def test_set_rdsheet_trim(self):
+        r = TestReader(
+            ('Sheet1',[['X',' ']]),
+            ('Sheet2',[['X','X']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ColumnTrimmer()
+        f.next = c = Mock()
+        f.workbook(book,'new.xls')
+        f.sheet(book.sheet_by_index(0),'new')
+        f.row(0,0)
+        f.cell(0,0,0,0)
+        f.cell(0,1,0,1)
+        f.set_rdsheet(book.sheet_by_index(1))
+        f.cell(0,0,1,0)
+        f.cell(0,1,1,1)
+        f.finish()
+        compare(c.method_calls,[
+            ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'new.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='Sheet1',strict=False), u'new'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('cell', (0, 1, 0, 1),{}),
+            ('set_rdsheet', (C('xlrd.sheet.Sheet',name='Sheet2',strict=False),),{}),
+            ('cell', (0, 0, 1, 0),{}),
+            ('cell', (0, 1, 1, 1),{}),
+            ('finish', (), {})
+            ])
 
     @log_capture()
     def test_use_write_sheet_name_in_logging(self,h):
