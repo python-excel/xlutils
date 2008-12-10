@@ -12,7 +12,6 @@ Currently available are:
   Utility functions for displaying information about xlrd-related
   objects in a user-friendly and safe fashion.
 
-
 **xlutils.filter**
   A mini framework for splitting and filtering Excel files into new
   Excel files.  
