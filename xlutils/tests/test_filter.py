@@ -17,25 +17,24 @@ import os
 
 class TestReader(BaseReader):
 
-    def __init__(self,*sheets):
-        self.book = DummyBook()
+    def __init__(self,*sheets,**books):
+        self.books = []
+        if sheets:
+            self.makeBook('test',sheets)
+        for name,value in sorted(books.items()):
+            self.makeBook(name,value)
+            
+    def makeBook(self,sheet_name,sheets):
+        book = DummyBook()
         index = 0
         for name,rows in sheets:
-            make_sheet(rows,self.book,name,index)
+            make_sheet(rows,book,name,index)
             index+=1
-            
-    def get_workbooks(self):
-        yield self.book,'test.xls'
-
-class TestTestReader(TestCase):
-
-    def test_cell_type(self):
-        r = TestReader(('Sheet1',(((XL_CELL_NUMBER,0.0),),)))
-        book = tuple(r.get_workbooks())[0][0]
-        cell = book.sheet_by_index(0).cell(0,0)
-        self.assertEqual(cell.value,0.0)
-        self.assertEqual(cell.ctype,XL_CELL_NUMBER)
+        self.books.append((book,sheet_name+'.xls'))
         
+    def get_workbooks(self):
+        return self.books
+
 class TestBaseReader(TestCase):
 
     def test_no_implementation(self):
@@ -1036,6 +1035,63 @@ class TestExamples(TestCase):
         font = actual.font_list[actual.xf_list[cell.xf_index].font_index]
         self.assertEqual(font.underline_type,1)
             
+class TestTestReader(TestCase):
+
+    def test_cell_type(self):
+        r = TestReader(('Sheet1',(((XL_CELL_NUMBER,0.0),),)))
+        book = tuple(r.get_workbooks())[0][0]
+        cell = book.sheet_by_index(0).cell(0,0)
+        self.assertEqual(cell.value,0.0)
+        self.assertEqual(cell.ctype,XL_CELL_NUMBER)
+        
+    def test(self):
+        r = TestReader(
+            test1=[('Sheet1',[['R1C1','R1C2'],
+                              ['R2C1','R2C2']]),
+                   ('Sheet2',[['R3C1','R3C2'],
+                              ['R4C1','R4C2']])],
+            test2=[('Sheet3',[['R5C1','R5C2'],
+                              ['R6C1','R6C2']]),
+                   ('Sheet4',[['R7C1','R7C2'],
+                              ['R8C1','R8C2']])],
+            )
+        f = Mock()
+        r(f)
+        compare([
+            ('start', (), {}),
+            ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'test1.xls'), {}),
+            ('sheet', (C('xlrd.sheet.Sheet'), 'Sheet1'), {}),
+            ('row', (0, 0), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('cell',(0, 1, 0, 1), {}),
+            ('row', (1, 1), {}),
+            ('cell', (1, 0, 1, 0), {}),
+            ('cell',(1, 1, 1, 1), {}),
+            ('sheet', (C('xlrd.sheet.Sheet'), 'Sheet2'), {}),
+            ('row', (0, 0), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('cell',(0, 1, 0, 1), {}),
+            ('row', (1, 1), {}),
+            ('cell', (1, 0, 1, 0), {}),
+            ('cell',(1, 1, 1, 1), {}),
+            ('workbook', (C('xlutils.tests.fixtures.DummyBook'), 'test2.xls'), {}),
+            ('sheet', (C('xlrd.sheet.Sheet'), 'Sheet3'), {}),
+            ('row', (0, 0), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('cell',(0, 1, 0, 1), {}),
+            ('row', (1, 1), {}),
+            ('cell', (1, 0, 1, 0), {}),
+            ('cell',(1, 1, 1, 1), {}),
+            ('sheet', (C('xlrd.sheet.Sheet'), 'Sheet4'), {}),
+            ('row', (0, 0), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('cell',(0, 1, 0, 1), {}),
+            ('row', (1, 1), {}),
+            ('cell', (1, 0, 1, 0), {}),
+            ('cell',(1, 1, 1, 1), {}),
+            ('finish', (), {})
+            ],f.method_calls)
+        
 def test_suite():
     return TestSuite((
         makeSuite(TestBaseReader),
