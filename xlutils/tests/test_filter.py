@@ -17,6 +17,8 @@ import os
 
 class TestReader(BaseReader):
 
+    formatting_info = 0
+    
     def __init__(self,*sheets,**books):
         self.setup(*sheets,**books)
         
@@ -28,7 +30,7 @@ class TestReader(BaseReader):
             self.makeBook(name,value)
         
     def makeBook(self,sheet_name,sheets):
-        book = DummyBook()
+        book = DummyBook(self.formatting_info)
         index = 0
         for name,rows in sheets:
             make_sheet(rows,book,name,index)
@@ -269,8 +271,10 @@ class TestMethodFilter(TestCase):
             ])
 
     def test_invalid(self):
-        m = should_raise(OurMethodFilter,ValueError("'foo' is not a valid method name"))        
-        m(self.called,['foo'])
+        s = should_raise(OurMethodFilter)
+        f = s(self.called,['foo'])
+        compare(s.raised,C(ValueError("'foo' is not a valid method name")))
+        
     
 from xlutils.filter import Echo
 
@@ -1116,6 +1120,39 @@ class TestTestReader(TestCase):
             ('row', (0, 0), {}),
             ('cell', (0, 0, 0, 0), {}),
             ('finish', (), {})],f.method_calls)
+        
+    def test_formatting_info(self):
+        r = TestReader()
+        f = Mock()
+        
+        r.formatting_info = True
+        
+        r.setup(('Sheet1',[['R1C1','R1C2']]))
+
+        # at this point you can now manipulate the xf index as follows:
+        book = r.books[0][0]
+        sx,rx,cx = 0,0,0
+        book.sheet_by_index(sx)._cell_xf_indexes[rx][cx]=42
+
+        # NB: cells where you haven't specified an xf index manually as
+        #     above will have an xf index of 0:
+        compare(book.sheet_by_index(0).cell(0,1).xf_index,0)
+        # and no matching style:
+        should_raise(book.xf_list,IndexError)[0]
+
+        r(f)
+        
+        compare([
+            ('start', (), {}),
+            ('workbook',(C('xlutils.tests.fixtures.DummyBook'), 'test.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet'), 'Sheet1'), {}),
+            ('row', (0, 0), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('cell', (0, 1, 0, 1), {}),
+            ('finish', (), {})],f.method_calls)
+
+        compare(book.sheet_by_index(0).cell(0,0).xf_index,42)
+        
         
 def test_suite():
     return TestSuite((
