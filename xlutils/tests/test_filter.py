@@ -18,12 +18,15 @@ import os
 class TestReader(BaseReader):
 
     def __init__(self,*sheets,**books):
+        self.setup(*sheets,**books)
+        
+    def setup(self,*sheets,**books):
         self.books = []
         if sheets:
             self.makeBook('test',sheets)
         for name,value in sorted(books.items()):
             self.makeBook(name,value)
-            
+        
     def makeBook(self,sheet_name,sheets):
         book = DummyBook()
         index = 0
@@ -1091,6 +1094,28 @@ class TestTestReader(TestCase):
             ('cell',(1, 1, 1, 1), {}),
             ('finish', (), {})
             ],f.method_calls)
+        
+    def test_setup(self):
+        r = TestReader()
+        f = Mock()
+        r(f)
+        compare([('start', (), {}), ('finish', (), {})],f.method_calls)
+        r.setup(('Sheet1',[['R1C1']]),
+                test1=[('Sheet2',[['R2C1']])])
+        r(f)
+        compare([
+            ('start', (), {}),
+            ('finish', (), {}),
+            ('start', (), {}),
+            ('workbook',(C('xlutils.tests.fixtures.DummyBook'), 'test.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet'), 'Sheet1'), {}),
+            ('row', (0, 0), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('workbook',(C('xlutils.tests.fixtures.DummyBook'), 'test1.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet'), 'Sheet2'), {}),
+            ('row', (0, 0), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('finish', (), {})],f.method_calls)
         
 def test_suite():
     return TestSuite((
