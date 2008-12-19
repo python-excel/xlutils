@@ -99,6 +99,13 @@ Credits
 Changes
 =======
 
+1.2.1 (19 Dec 2008)
+-------------------
+
+- add extremely limited formatting_info support to DummyBook and TestReader
+
+- move to testfixtures 1.5.3 for tests
+
 1.2.0 (10 Dec 2008)
 -------------------
 
