@@ -121,7 +121,7 @@ Available Readers
   >>> from xlutils.filter import GlobReader
   >>> r = GlobReader(os.path.join(test_files,'*.xls'))
   >>> [p[len(test_files)+1:] for p in r.get_filepaths()]
-  ['test.xls', 'testall.xls']
+  ['test.xls', 'testall.xls', 'testnoformatting.xls']
 
   All the other functionality is provided by BaseReader:
 
@@ -507,8 +507,8 @@ Available Filters
   >>> os.listdir(temp_dir)
   []
 
-  Now test.xls and testall.xls are processed, but errors are only
-  logged while processing test.xls:
+  Now test.xls, testall.xls and testnoformatting.xls are processed,
+  but errors are only logged while processing test.xls:
 
   >>> process(
   ...     GlobReader(os.path.join(test_files,'*.xls')),
@@ -521,7 +521,7 @@ Available Filters
   So, the output directory contains testall.xls, but no test.xls:
 
   >>> os.listdir(temp_dir)
-  ['testall.xls']
+  ['testall.xls', 'testnoformatting.xls']
 
   Echo
   ----

@@ -229,6 +229,8 @@ class BaseWriter:
         self.wtname = wtbook_name
         self.style_list = []
         self.wtsheet_names = set()
+        if not rdbook.formatting_info:
+            return
         for rdxf in rdbook.xf_list:
             wtxf = xlwt.Style.XFStyle()
             #

@@ -10,7 +10,7 @@ from tempfile import TemporaryFile
 from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
-from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process
+from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
 
 import os
@@ -612,6 +612,33 @@ class TestColumnTrimmer(TestCase):
             ('row', (1, 1),{}),
             ('cell', (0, 0, 0, 0),{}),('cell', (0, 1, 0, 1),{}),
             ('cell', (1, 0, 1, 0),{}),('cell', (1, 1, 1, 1),{}),
+            ('workbook', (C('xlrd.Book'), 'testnoformatting.xls'), {}),
+            ('sheet', (C('xlrd.sheet.Sheet'), u'Sheet1'), {}),
+            ('row', (0, 0), {}),
+            ('row', (1, 1), {}),
+            ('row', (2, 2), {}),
+            ('row', (3, 3), {}),
+            ('row', (4, 4), {}),
+            ('row', (5, 5), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('cell', (0, 1, 0, 1), {}),
+            ('cell', (1, 0, 1, 0), {}),
+            ('cell', (1, 1, 1, 1), {}),
+            ('cell', (2, 0, 2, 0), {}),
+            ('cell', (2, 1, 2, 1), {}),
+            ('cell', (3, 0, 3, 0), {}),
+            ('cell', (3, 1, 3, 1), {}),
+            ('cell', (4, 0, 4, 0), {}),
+            ('cell', (4, 1, 4, 1), {}),
+            ('cell', (5, 0, 5, 0), {}),
+            ('cell', (5, 1, 5, 1), {}),
+            ('sheet', (C('xlrd.sheet.Sheet'), u'Sheet2'), {}),
+            ('row', (0, 0), {}),
+            ('row', (1, 1), {}),
+            ('cell', (0, 0, 0, 0), {}),
+            ('cell', (0, 1, 0, 1), {}),
+            ('cell', (1, 0, 1, 0), {}),
+            ('cell', (1, 1, 1, 1), {}),
             ('finish', (), {})
             ])
         self.assertEqual(len(h.records),0)
@@ -667,7 +694,7 @@ class TestBaseWriter(TestCase):
         if name not in self.noted_indexes:
             self.noted_indexes[name]={}
         mapping = self.noted_indexes[name]
-        a,e = getattr(ao,name),getattr(eo,name)
+        a,e = getattr(ao,name,None),getattr(eo,name,None)
         if a not in mapping:
             mapping[a]=set()
         # for style compression, we may get multiple expected indexes
@@ -681,7 +708,8 @@ class TestBaseWriter(TestCase):
                    l_a_format_map=38,
                    l_e_format_map=37,
                    l_a_font_list=9,
-                   l_e_font_list=7):
+                   l_e_font_list=7,
+                   defcolwidth=11):
         self.noted_indexes = {}
         # now open the source file
         e = open_workbook(path,pickleable=0,formatting_info=1)
@@ -702,7 +730,7 @@ class TestBaseWriter(TestCase):
             es = e.sheet_by_index(sheet_x)
             # BUG: xlwt does nothing with col_default_width, it should :-(
             self.assertEqual(es.standardwidth,None)
-            self.assertEqual(es.defcolwidth,11)
+            self.assertEqual(es.defcolwidth,defcolwidth)
             self.assertEqual(ash.standardwidth,None)
             self.assertEqual(ash.defcolwidth,None)
             # /BUG
@@ -738,14 +766,15 @@ class TestBaseWriter(TestCase):
                 'ncols',
                 )
             for col_x in range(ash.ncols):
-                ac = ash.colinfo_map[col_x]
-                ec = es.colinfo_map[col_x]
-                assertEqual(ac,ec,
-                            'width',
-                            'hidden',
-                            'outline_level',
-                            'collapsed',
-                            )
+                ac = ash.colinfo_map.get(col_x)
+                ec = es.colinfo_map.get(col_x)
+                if ac is not None:
+                    assertEqual(ac,ec,
+                                'width',
+                                'hidden',
+                                'outline_level',
+                                'collapsed',
+                                )
                 self.note_index(ac,ec,'xf_index')
             for row_x in range(ash.nrows):
                 ar = ash.rowinfo_map.get(row_x)
@@ -783,6 +812,8 @@ class TestBaseWriter(TestCase):
         self.assertEqual(len(a.xf_list),l_a_xf_list)
         self.assertEqual(len(e.xf_list),l_e_xf_list)
         for ai,eis in self.noted_indexes['xf_index'].items():
+            if ai is None:
+                continue
             axf = a.xf_list[ai]
             for ei in eis:
                 exf = e.xf_list[ei]
@@ -878,6 +909,26 @@ class TestBaseWriter(TestCase):
         self.failUnless('testall.xls' in w.closed)
         self.check_file(w,test_xls_path)
 
+    def test_single_workbook_no_formatting(self):
+        # create test reader
+        test_xls_path = os.path.join(test_files,'testnoformatting.xls')
+        r = XLRDReader(open_workbook(os.path.join(test_files,'testall.xls')),'testnoformatting.xls')
+        # source sheet must have merged cells for test!
+        book = tuple(r.get_workbooks())[0][0]
+        # send straight to writer
+        w = TestWriter()
+        r(w)
+        # check stuff on the writer
+        self.assertEqual(w.files.keys(),['testnoformatting.xls'])
+        self.failUnless('testnoformatting.xls' in w.closed)
+        self.check_file(w,test_xls_path,
+                        l_a_xf_list=17,
+                        l_e_xf_list=17,
+                        l_a_format_map=37,
+                        l_a_font_list=6,
+                        l_e_font_list=6,
+                        defcolwidth=None)
+
     def test_multiple_workbooks(self):
         # globreader is tested elsewhere
         r = GlobReader(os.path.join(test_files,'*.xls'))
@@ -885,12 +936,15 @@ class TestBaseWriter(TestCase):
         w = TestWriter()
         r(w)
         # check stuff on the writer
-        self.assertEqual(w.files.keys(),['test.xls','testall.xls'])
+        self.assertEqual(w.files.keys(),['test.xls','testnoformatting.xls','testall.xls'])
         self.failUnless('test.xls' in w.closed)
         self.failUnless('testall.xls' in w.closed)
+        self.failUnless('testnoformatting.xls' in w.closed)
         self.check_file(w,os.path.join(test_files,'testall.xls'))
         self.check_file(w,os.path.join(test_files,'test.xls'),
                         18,21,38,37,7,4)
+        self.check_file(w,os.path.join(test_files,'testnoformatting.xls'),
+                        18,17,37,37,6,6,None)
     
     def test_set_rd_sheet(self):
         # also tests that 'row' doesn't have to be called,
