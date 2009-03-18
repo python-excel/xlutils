@@ -31,7 +31,7 @@ setup(
     include_package_data=True,
     install_requires=[
     'xlrd >= 0.6.1a1',
-    'xlwt >= 0.7.0',
+    'xlwt >= 0.7.1',
     'errorhandler',
     ],
     )

@@ -23,6 +23,7 @@ def tearDown(test):
 def test_suite():
     return unittest.TestSuite((
         DocFileSuite('../readme.txt', optionflags=options),
+        DocFileSuite('../docs/copy.txt',optionflags=options,setUp=setUp,tearDown=tearDown),
         DocFileSuite('../docs/margins.txt',optionflags=options),
         DocFileSuite('../docs/filter.txt',optionflags=options,setUp=setUp,tearDown=tearDown),
         DocFileSuite('../docs/display.txt',optionflags=options),

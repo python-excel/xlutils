@@ -10,7 +10,7 @@ from tempfile import TemporaryFile
 from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
-from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader
+from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader,XLWTWriter
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
 
 import os
@@ -1056,6 +1056,56 @@ class TestDirectoryWriter(TestCase):
         # check file exists with the right name
         self.assertEqual(os.listdir(d.path),['a+file.xls'])
 
+class TestXLWTWriter(TestCase):
+
+    def setUp(self):
+        self.w = XLWTWriter()
+        
+    def test_no_files(self):
+        r = GlobReader(os.path.join(test_files,'*not.xls'))
+        r(self.w)
+        compare(self.w.output,[])
+        
+    def test_one_file(self):
+        r = GlobReader(os.path.join(test_files,'test.xls'))
+        r(self.w)
+        compare(self.w.output,[
+            ('test.xls',C('xlwt.Workbook'))
+            ])
+        # make sure wtbook is deleted
+        compare(self.w.wtbook,None)
+        
+    def test_multiple_files(self):
+        r = GlobReader(os.path.join(test_files,'*.xls'))
+        r(self.w)
+        compare(self.w.output,[
+            ('test.xls',C('xlwt.Workbook')),
+            ('testall.xls',C('xlwt.Workbook')),
+            ('testnoformatting.xls',C('xlwt.Workbook')),
+            ])
+        
+    def test_multiple_files_same_name(self):
+        r = TestReader(
+            ('Sheet1',[['S1R0C0']]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        self.w.start()
+        self.w.workbook(book,'new.xls')
+        self.w.sheet(book.sheet_by_index(0),'new1')
+        self.w.cell(0,0,0,0)
+        self.w.workbook(book,'new.xls')
+        self.w.sheet(book.sheet_by_index(0),'new2')
+        self.w.cell(0,0,0,0)
+        self.w.finish()
+        compare(self.w.output,[
+            ('new.xls',C('xlwt.Workbook')),
+            ('new.xls',C('xlwt.Workbook')),
+            ])
+        compare(self.w.output[0][1].get_sheet(0).name,
+                'new1')
+        compare(self.w.output[1][1].get_sheet(0).name,
+                'new2')
+
 class TestProcess(TestCase):
 
     def test_setup(self):
@@ -1070,32 +1120,6 @@ class TestProcess(TestCase):
         compare(F1.method_calls,[('finished',(),{})])
         compare(F2.method_calls,[])
     
-class TestExamples(TestCase):
-
-    def test_mutate_cell(self):
-        from xlutils.filter import GlobReader,BaseFilter,process
-        class ChangeCell(BaseFilter):
-            def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
-                if self.rdsheet.name=='Sheet1' and rdrowx==0 and rdcolx==0:
-                    cell = self.rdsheet.cell(rdrowx,rdcolx)
-                    self.rdsheet.put_cell(rdrowx,rdcolx,cell.ctype,'Changed',cell.xf_index)
-                self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
-        w = TestWriter()
-        process(
-            GlobReader(os.path.join(test_files,'testall.xls')),
-            ChangeCell(),
-            w
-            )
-        self.assertEqual(w.files.keys(),['testall.xls'])
-        f = w.files['testall.xls'].file
-        actual = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
-        f.close()
-        cell = actual.sheet_by_name('Sheet1').cell(0,0)
-        self.assertEqual(cell.ctype,XL_CELL_TEXT)
-        self.assertEqual(cell.value,'Changed')
-        font = actual.font_list[actual.xf_list[cell.xf_index].font_index]
-        self.assertEqual(font.underline_type,1)
-            
 class TestTestReader(TestCase):
 
     def test_cell_type(self):
@@ -1220,6 +1244,6 @@ def test_suite():
         makeSuite(TestColumnTrimmer),
         makeSuite(TestBaseWriter),
         makeSuite(TestDirectoryWriter),
+        makeSuite(TestXLWTWriter),
         makeSuite(TestProcess),
-        makeSuite(TestExamples),
         ))

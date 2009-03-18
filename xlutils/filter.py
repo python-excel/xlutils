@@ -321,7 +321,7 @@ class BaseWriter:
         
         self.rdsheet = rdsheet
         self.wtsheet_name=wtsheet_name
-        self.wtsheet = wtsheet = self.wtbook.add_sheet(wtsheet_name)
+        self.wtsheet = wtsheet = self.wtbook.add_sheet(wtsheet_name,cell_overwrite_ok=True)
         self.wtcols = set() # keep track of which columns have had their attributes set up
         #
         # MERGEDCELLS
@@ -505,6 +505,16 @@ class StreamWriter(BaseWriter):
             raise Exception('Attempt to write more than one workbook')
         self.fired = True
         return self.stream
+
+class XLWTWriter(BaseWriter):
+
+    def __init__(self):
+        self.output = []
+
+    def close(self):
+        if self.wtbook is not None:
+            self.output.append((self.wtname,self.wtbook))
+            del self.wtbook
 
 class MethodFilterMethod:
 

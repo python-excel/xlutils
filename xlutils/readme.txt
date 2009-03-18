@@ -49,6 +49,9 @@ The Utilities
 Each of the utilities in described in its own file found in the 'docs'
 directory of the package: 
 
+*copy.txt*
+  Tools for copying xlrd.Book objects to xlwt.Workbook objects.
+
 *display.txt*
   Utility functions for displaying information about xlrd-related
   objects in a user-friendly and safe fashion.

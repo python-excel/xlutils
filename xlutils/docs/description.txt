@@ -8,6 +8,9 @@ and xlwt packages, they are collected together seperately here.
 
 Currently available are:
 
+**xlutils.copy**
+  Tools for copying xlrd.Book objects to xlwt.Workbook objects.
+
 **xlutils.display**
   Utility functions for displaying information about xlrd-related
   objects in a user-friendly and safe fashion.

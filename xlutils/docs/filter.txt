@@ -276,6 +276,38 @@ Available Writers
   >>> len(tf.read())
   5632
 
+  XLWTWriter
+  ----------
+
+  If you want to change cells after the filtering process is complete
+  then an XLWTWriter can be used to obtain the xlwt.Workbook
+  objects that result: 
+
+  >>> from xlutils.filter import XLWTWriter
+  >>> w = XLWTWriter()
+  >>> process(TestReader(('Sheet1',[['R0C0']])),w)
+
+  The objects can then be manipulated and saved as required:
+
+  >>> w.output
+  [('test.xls', <xlwt.Workbook.Workbook object at ...>)]
+
+  >>> book = w.output[0][1]
+  >>> book.get_sheet(0).write(0,1,'R0C1')
+
+  >>> temp_dir = TempDirectory()
+  >>> temp_dir.listdir()
+  
+  >>> book.save(os.path.join(temp_dir.path,w.output[0][0]))
+  >>> temp_dir.listdir()
+  test.xls
+
+  As with previous writers, most of the functionality is provided by
+  BaseWriter:
+
+  >>> isinstance(w,BaseWriter)
+  True
+
 Available Filters
 =================
 
@@ -592,7 +624,7 @@ Available Filters
 
   The equivalent of the following call::
 
-    from guppy import hpp; hpy().heap().stat.dump('/some/path')
+    from guppy import hpy; hpy().heap().stat.dump('/some/path')
 
   will be performed whenever the MemoryLogger's sheet and cell methods
   are called.
@@ -609,30 +641,7 @@ Available Filters
 Example Usage
 =============
 
-Here's a simple example of how to copy a workbook changing only one
-cell in the process:
-
->>> from xlutils.filter import GlobReader,DirectoryWriter,BaseFilter,process
->>> class ChangeCell(BaseFilter):
-...     
-...     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
-...         if self.rdsheet.name=='Sheet1' and rdrowx==0 and rdcolx==0:
-...             cell = self.rdsheet.cell(rdrowx,rdcolx)
-...             self.rdsheet.put_cell(rdrowx,rdcolx,cell.ctype,'Changed',cell.xf_index)
-...         self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
-
->>> temp_dir = TempDirectory().path
->>> os.listdir(temp_dir)
-[]
->>> process(
-...     GlobReader(os.path.join(test_files,'testall.xls')),
-...     ChangeCell(),
-...     DirectoryWriter(temp_dir),
-... )
->>> os.listdir(temp_dir)
-['testall.xls']
-
-Here's another example that makes use of all the example components
+Here's an example that makes use of all the example components
 above to filter out odd numbered rows from an original workbook's
 sheets. To do this we need one more filter:
 
