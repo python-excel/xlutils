@@ -1,4 +1,4 @@
-# Copyright (c) 2008 Simplistix Ltd
+# Copyright (c) 2008-2009 Simplistix Ltd
 #
 # This Software is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license.html

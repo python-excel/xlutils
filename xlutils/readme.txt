@@ -84,7 +84,7 @@ https://secure.simplistix.co.uk/svn/xlutils/
 Licensing
 =========
 
-Copyright (c) 2008 Simplistix Ltd
+Copyright (c) 2008-2009 Simplistix Ltd
 
 This Software is released under the MIT License:
 http://www.opensource.org/licenses/mit-license.html
@@ -101,6 +101,15 @@ Credits
 
 Changes
 =======
+
+1.3.0 (18 Mar 2009)
+-------------------
+
+- fix bug that cause BaseWriter to raise exceptions when handling
+  source workbooks opened by xlrd 0.7.0 and above where
+  formatting_info had been passed as False
+
+- add xlutils.copy
 
 1.2.1 (19 Dec 2008)
 -------------------
