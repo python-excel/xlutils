@@ -102,6 +102,12 @@ Credits
 Changes
 =======
 
+1.3.1 (22 May 2009)
+-------------------
+
+- In xlutils.styles, handle there case where two names were mapped to the 
+  same xfi, but the first one was empty.
+
 1.3.0 (18 Mar 2009)
 -------------------
 
