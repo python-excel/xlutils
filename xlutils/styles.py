@@ -16,7 +16,8 @@ class Styles:
         xfi_to_name = {}
         for name, info in book.style_name_map.items():
             built_in, xfi = info
-            assert xfi not in xfi_to_name # should be one-to-one mapping
+            # allow multiple 
+            assert xfi not in xfi_to_name or not xfi_to_name[xfi]
             xfi_to_name[xfi] = name
         self.cell_styles = {}
         for xfi in xrange(len(book.xf_list)):
