@@ -43,6 +43,9 @@ on your PYTHONPATH:
 
   http://pypi.python.org/pypi/errorhandler
 
+  This package is only required if you wish to use
+  xlutils.filter.ErrorFilter.
+
 The Utilities
 =============
 
@@ -101,6 +104,13 @@ Credits
 
 Changes
 =======
+
+1.3.2 (18 June 2009)
+-------------------
+
+- Made installation work when `setuptools` isn't present.
+
+- Made `errorhandler` an optional dependency.
 
 1.3.1 (22 May 2009)
 -------------------

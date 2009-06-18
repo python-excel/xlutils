@@ -5,7 +5,10 @@
 # See license.txt for more details.
 
 import os
-from setuptools import setup, find_packages
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 package_dir = os.path.join(os.path.dirname(__file__),'xlutils')
 
@@ -26,7 +29,7 @@ setup(
     'License :: OSI Approved :: MIT License',
     'Topic :: Office/Business :: Financial :: Spreadsheet',
     ],
-    packages=find_packages(),
+    packages=['xlutils','xlutils.tests'],
     zip_safe=False,
     include_package_data=True,
     install_requires=[

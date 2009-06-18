@@ -8,7 +8,6 @@ import logging
 import os
 import xlrd,xlwt
 
-from errorhandler import ErrorHandler
 from glob import glob
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -596,6 +595,7 @@ class ErrorFilter(BaseReader,BaseWriter):
     temp_path = None
     
     def __init__(self,level=logging.ERROR,message='No output as errors have occurred.'):
+        from errorhandler import ErrorHandler
         self.handler = ErrorHandler(level)
         self.message = message
 
