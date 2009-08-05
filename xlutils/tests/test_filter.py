@@ -720,9 +720,9 @@ class TestBaseWriter(TestCase):
         # and then compare
         def assertEqual(e,a,*names):
             for name in names:
-                aa = getattr(e,name)
-                ea = getattr(a,name)
-                self.assertEqual(aa,ea,'%s:%r!=%r'%(name,aa,ea))
+                ea = getattr(e,name)
+                aa = getattr(a,name)
+                self.assertEqual(aa,ea,'%s: %r(actual)!=%r(expected)'%(name,aa,ea))
 
         assertEqual(e,a,'nsheets')
         for sheet_x in range(a.nsheets):
@@ -739,7 +739,7 @@ class TestBaseWriter(TestCase):
             compare(sorted(ash.merged_cells),sorted(es.merged_cells))
 
             assertEqual(
-                ash,es,
+                es,ash,
                 'show_formulas',
                 'show_grid_lines',
                 'show_sheet_headers',
@@ -769,7 +769,7 @@ class TestBaseWriter(TestCase):
                 ac = ash.colinfo_map.get(col_x)
                 ec = es.colinfo_map.get(col_x)
                 if ac is not None:
-                    assertEqual(ac,ec,
+                    assertEqual(ec,ac,
                                 'width',
                                 'hidden',
                                 'outline_level',
@@ -786,7 +786,7 @@ class TestBaseWriter(TestCase):
                     #     which is what this tests
                     er = ar.__class__
                 else:
-                    assertEqual(ar,er,
+                    assertEqual(er,ar,
                                 'height',
                                 'has_default_height',
                                 'height_mismatch',
@@ -802,7 +802,7 @@ class TestBaseWriter(TestCase):
                 for col_x in range(ash.ncols):
                     ac = ash.cell(row_x,col_x)
                     ec = es.cell(row_x,col_x)
-                    assertEqual(ac,ec,
+                    assertEqual(ec,ac,
                                 'ctype',
                                 'value')
                     self.note_index(ac,ec,'xf_index')
@@ -821,13 +821,13 @@ class TestBaseWriter(TestCase):
                 self.note_index(axf,exf,'font_index')
                 ap = axf.protection
                 ep = exf.protection
-                assertEqual(ap,ep,
+                assertEqual(ep,ap,
                             'cell_locked',
                             'formula_hidden',
                             )
                 ab = axf.border
                 eb = exf.border
-                assertEqual(ab,eb,
+                assertEqual(eb,ab,
                             'left_line_style',
                             'right_line_style',
                             'top_line_style',
@@ -843,14 +843,14 @@ class TestBaseWriter(TestCase):
                             )
                 ab = axf.background
                 eb = exf.background
-                assertEqual(ab,eb,
+                assertEqual(eb,ab,
                             'fill_pattern',
                             'pattern_colour_index',
                             'background_colour_index',
                             )
                 aa = axf.alignment
                 ea = exf.alignment
-                assertEqual(aa,ea,
+                assertEqual(ea,aa,
                             'hor_align',
                             'vert_align',
                             'text_direction',
@@ -868,7 +868,7 @@ class TestBaseWriter(TestCase):
             af = a.format_map[ai]
             for ei in eis:
                 ef = e.format_map[ei]
-                assertEqual(af,ef,
+                assertEqual(ef,af,
                             'format_str',
                             'type')
         # xlwt writes more fonts than exist in an original,
@@ -879,7 +879,7 @@ class TestBaseWriter(TestCase):
             af = a.font_list[ai]
             for ei in eis:
                 ef = e.font_list[ei]
-                assertEqual(af,ef,
+                assertEqual(ef,af,
                             'height',
                             'italic',
                             'struck_out',
