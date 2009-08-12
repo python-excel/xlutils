@@ -228,6 +228,10 @@ class BaseWriter:
         self.wtname = wtbook_name
         self.style_list = []
         self.wtsheet_names = set()
+        # the index of the current wtsheet being written
+        self.wtsheet_index = 0
+        # have we set a visible sheet already?
+        self.sheet_visible = False
         if not rdbook.formatting_info:
             return
         for rdxf in rdbook.xf_list:
@@ -357,13 +361,20 @@ class BaseWriter:
         wtsheet.show_grid = rdsheet.show_grid_lines
         wtsheet.show_headers = rdsheet.show_sheet_headers
         wtsheet.panes_frozen = rdsheet.panes_are_frozen
-        wtsheet.show_empty_as_zero = rdsheet.show_zero_values
+        wtsheet.show_zero_values = rdsheet.show_zero_values
         wtsheet.auto_colour_grid = rdsheet.automatic_grid_line_colour
         wtsheet.cols_right_to_left = rdsheet.columns_from_right_to_left
         wtsheet.show_outline = rdsheet.show_outline_symbols
         wtsheet.remove_splits = rdsheet.remove_splits_if_pane_freeze_is_removed
         wtsheet.selected = rdsheet.sheet_selected
-        wtsheet.sheet_visible = rdsheet.sheet_visible
+        # xlrd doesn't read WINDOW1 records, so we have to make a best
+        # guess at which the active sheet should be:
+        # (at a guess, only one sheet should be marked as visible)
+        if not self.sheet_visible and rdsheet.sheet_visible:
+            self.wtbook.active_sheet = self.wtsheet_index
+            wtsheet.sheet_visible = 1
+        self.wtsheet_index +=1
+        
         wtsheet.page_preview = rdsheet.show_in_page_break_preview
         wtsheet.first_visible_row = rdsheet.first_visible_rowx
         wtsheet.first_visible_col = rdsheet.first_visible_colx

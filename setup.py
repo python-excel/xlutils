@@ -33,8 +33,8 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-    'xlrd >= 0.6.1a1',
-    'xlwt >= 0.7.1',
+    'xlrd >= 0.7.1',
+    'xlwt >= 0.7.2',
     'errorhandler',
     ],
     extras_require=dict(

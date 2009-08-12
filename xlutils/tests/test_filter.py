@@ -709,7 +709,21 @@ class TestBaseWriter(TestCase):
                    l_e_format_map=37,
                    l_a_font_list=9,
                    l_e_font_list=7,
-                   defcolwidth=11):
+                   **provided_overrides):
+        # allow overrides to be specified, as well as
+        # default overrides, to save typing
+        overrides = {
+            'sheet':dict(
+                # BUG: xlwt does nothing with col_default_width, it should :-(
+                defcolwidth=None,
+                )
+            }
+        for k,d in provided_overrides.items():
+            if k in overrides:
+                overrides[k].update(d)
+            else:
+                overrides[k]=d
+                
         self.noted_indexes = {}
         # now open the source file
         e = open_workbook(path,pickleable=0,formatting_info=1)
@@ -718,28 +732,22 @@ class TestBaseWriter(TestCase):
         a = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
         f.close()
         # and then compare
-        def assertEqual(e,a,*names):
+        def assertEqual(e,a,overrides,t,*names):
             for name in names:
-                ea = getattr(e,name)
+                ea = overrides.get(t,{}).get(name,getattr(e,name))
                 aa = getattr(a,name)
                 self.assertEqual(aa,ea,'%s: %r(actual)!=%r(expected)'%(name,aa,ea))
 
-        assertEqual(e,a,'nsheets')
+        assertEqual(e,a,overrides,'book','nsheets')
         for sheet_x in range(a.nsheets):
             ash = a.sheet_by_index(sheet_x)
             es = e.sheet_by_index(sheet_x)
-            # BUG: xlwt does nothing with col_default_width, it should :-(
-            self.assertEqual(es.standardwidth,None)
-            self.assertEqual(es.defcolwidth,defcolwidth)
-            self.assertEqual(ash.standardwidth,None)
-            self.assertEqual(ash.defcolwidth,None)
-            # /BUG
             
             # order doesn't matter in this list
             compare(sorted(ash.merged_cells),sorted(es.merged_cells))
 
             assertEqual(
-                es,ash,
+                es,ash,overrides,'sheet',
                 'show_formulas',
                 'show_grid_lines',
                 'show_sheet_headers',
@@ -764,12 +772,13 @@ class TestBaseWriter(TestCase):
                 'default_additional_space_below',
                 'nrows',
                 'ncols',
+                'standardwidth',
                 )
             for col_x in range(ash.ncols):
                 ac = ash.colinfo_map.get(col_x)
                 ec = es.colinfo_map.get(col_x)
                 if ac is not None:
-                    assertEqual(ec,ac,
+                    assertEqual(ec,ac,overrides,'col',
                                 'width',
                                 'hidden',
                                 'outline_level',
@@ -786,7 +795,7 @@ class TestBaseWriter(TestCase):
                     #     which is what this tests
                     er = ar.__class__
                 else:
-                    assertEqual(er,ar,
+                    assertEqual(er,ar,overrides,'row',
                                 'height',
                                 'has_default_height',
                                 'height_mismatch',
@@ -802,7 +811,7 @@ class TestBaseWriter(TestCase):
                 for col_x in range(ash.ncols):
                     ac = ash.cell(row_x,col_x)
                     ec = es.cell(row_x,col_x)
-                    assertEqual(ec,ac,
+                    assertEqual(ec,ac,overrides,'cell',
                                 'ctype',
                                 'value')
                     self.note_index(ac,ec,'xf_index')
@@ -821,13 +830,13 @@ class TestBaseWriter(TestCase):
                 self.note_index(axf,exf,'font_index')
                 ap = axf.protection
                 ep = exf.protection
-                assertEqual(ep,ap,
+                assertEqual(ep,ap,overrides,'protection',
                             'cell_locked',
                             'formula_hidden',
                             )
                 ab = axf.border
                 eb = exf.border
-                assertEqual(eb,ab,
+                assertEqual(eb,ab,overrides,'border',
                             'left_line_style',
                             'right_line_style',
                             'top_line_style',
@@ -843,14 +852,14 @@ class TestBaseWriter(TestCase):
                             )
                 ab = axf.background
                 eb = exf.background
-                assertEqual(eb,ab,
+                assertEqual(eb,ab,overrides,'background',
                             'fill_pattern',
                             'pattern_colour_index',
                             'background_colour_index',
                             )
                 aa = axf.alignment
                 ea = exf.alignment
-                assertEqual(ea,aa,
+                assertEqual(ea,aa,overrides,'alignment',
                             'hor_align',
                             'vert_align',
                             'text_direction',
@@ -868,7 +877,7 @@ class TestBaseWriter(TestCase):
             af = a.format_map[ai]
             for ei in eis:
                 ef = e.format_map[ei]
-                assertEqual(ef,af,
+                assertEqual(ef,af,overrides,'format',
                             'format_str',
                             'type')
         # xlwt writes more fonts than exist in an original,
@@ -879,7 +888,7 @@ class TestBaseWriter(TestCase):
             af = a.font_list[ai]
             for ei in eis:
                 ef = e.font_list[ei]
-                assertEqual(ef,af,
+                assertEqual(ef,af,overrides,'font',
                             'height',
                             'italic',
                             'struck_out',
@@ -901,6 +910,12 @@ class TestBaseWriter(TestCase):
         # source sheet must have merged cells for test!
         book = tuple(r.get_workbooks())[0][0]
         self.failUnless(book.sheet_by_index(0).merged_cells)
+        # source book must also have a sheet other than the
+        # first one selected
+        compare([s.sheet_selected for s in book.sheets()],[0,1])
+        compare([s.sheet_visible for s in book.sheets()],[0,1])
+        # source book must have show zeros set appropriately:
+        compare([s.show_zero_values for s in book.sheets()],[0,0])
         # send straight to writer
         w = TestWriter()
         r(w)
@@ -927,7 +942,12 @@ class TestBaseWriter(TestCase):
                         l_a_format_map=37,
                         l_a_font_list=6,
                         l_e_font_list=6,
-                        defcolwidth=None)
+                        sheet=dict(
+                            # as of xlwt 0.7.2, these default values
+                            # are written if none are provided :-(
+                            cached_page_break_preview_mag_factor=60,
+                            cached_normal_view_mag_factor=100,
+                            ))
 
     def test_multiple_workbooks(self):
         # globreader is tested elsewhere
@@ -944,7 +964,33 @@ class TestBaseWriter(TestCase):
         self.check_file(w,os.path.join(test_files,'test.xls'),
                         18,21,38,37,7,4)
         self.check_file(w,os.path.join(test_files,'testnoformatting.xls'),
-                        18,17,37,37,6,6,None)
+                        18,17,37,37,6,6)
+    
+    def test_start(self):
+        w = TestWriter()
+        w.wtbook = 'junk'
+        w.start()
+        compare(w.wtbook,None)
+    
+    @replace('xlutils.filter.BaseWriter.close',Mock())
+    def test_workbook(self,c):
+        # style copying is tested in the more complete tests
+        # here we just check that certain atributes are set properly
+        w = TestWriter()
+        w.style_list = 'junk'
+        w.wtsheet_names = 'junk'
+        w.wtsheet_index = 'junk'
+        w.sheet_visible = 'junk'
+        b = make_book()
+        w.workbook(b,'foo')
+        compare(c.call_args_list,[((),{})])
+        compare(w.rdbook,b)
+        compare(w.wtbook,C('xlwt.Workbook'))
+        compare(w.wtname,'foo')
+        compare(w.style_list,[])
+        compare(w.wtsheet_names,set())
+        compare(w.wtsheet_index,0)
+        compare(w.sheet_visible,False)
     
     def test_set_rd_sheet(self):
         # also tests that 'row' doesn't have to be called,
@@ -985,12 +1031,6 @@ class TestBaseWriter(TestCase):
         self.assertEqual(sheet.cell(2,0).value,'S1R1C0')
         self.assertEqual(sheet.cell(3,0).value,'S2R1C0')
         
-    def test_start(self):
-        w = TestWriter()
-        w.wtbook = 'junk'
-        w.start()
-        compare(w.wtbook,None)
-    
     def test_bogus_sheet_name(self):
         r = TestReader(
             ('sheet',([['S1R0C0']]),),
@@ -1038,6 +1078,10 @@ class TestBaseWriter(TestCase):
 
 class TestDirectoryWriter(TestCase):
 
+    def test_inheritance(self):
+        from xlutils.filter import DirectoryWriter
+        self.failUnless(isinstance(DirectoryWriter('foo'),BaseWriter))
+
     @tempdir
     def test_plus_in_workbook_name(self,d):
         from xlutils.filter import DirectoryWriter
@@ -1061,6 +1105,9 @@ class TestXLWTWriter(TestCase):
     def setUp(self):
         self.w = XLWTWriter()
         
+    def test_inheritance(self):
+        self.failUnless(isinstance(self.w,BaseWriter))
+
     def test_no_files(self):
         r = GlobReader(os.path.join(test_files,'*not.xls'))
         r(self.w)

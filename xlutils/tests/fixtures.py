@@ -39,7 +39,7 @@ class DummyBook:
     def sheet_by_index(self,i):
         return self.__sheets[i]
         
-def make_book(rows):
+def make_book(rows=[]):
     book = DummyBook()
     sheet = make_sheet(rows,book=book)
     return book
