@@ -457,43 +457,24 @@ Available Filters
   >>> len(c.method_calls)
   17
 
-  In addition to the logging of error messages, the following
-  conditions will also cause all methods to be filtered:
+  In addition to the logging of error messages, error cells will 
+  also cause all methods to be filtered:
 
-  - errors cells:
-
-    >>> from xlrd import XL_CELL_ERROR
-    >>> r = TestReader(
-    ...         (u'Price(\xa3)',(((XL_CELL_ERROR,0),),)),
-    ...         )
-    >>> c = Mock()
-    >>> h.clear()
-    >>> process(r,ErrorFilter(),c)
-    >>> len(c.method_calls)
-    0
-    >>> print h
-    xlutils.filter ERROR
-      Cell A1 of sheet 'Price(?)' contains a bad value: error (#NULL!)
-    xlutils.filter ERROR
-      No output as errors have occurred.
+  >>> from xlrd import XL_CELL_ERROR
+  >>> r = TestReader(
+  ...         (u'Price(\xa3)',(((XL_CELL_ERROR,0),),)),
+  ...         )
+  >>> c = Mock()
+  >>> h.clear()
+  >>> process(r,ErrorFilter(),c)
+  >>> len(c.method_calls)
+  0
+  >>> print h
+  xlutils.filter ERROR
+    Cell A1 of sheet 'Price(?)' contains a bad value: error (#NULL!)
+  xlutils.filter ERROR
+    No output as errors have occurred.
   
-  - boolean cells, as these cannot be written by xlwt:
-
-    >>> from xlrd import XL_CELL_BOOLEAN
-    >>> r = TestReader(
-    ...         (u'Sheet 1',(((XL_CELL_BOOLEAN,0),),)),
-    ...         )
-    >>> c = Mock()
-    >>> h.clear()
-    >>> process(r,ErrorFilter(),c)
-    >>> len(c.method_calls)
-    0
-    >>> print h
-    xlutils.filter ERROR
-      Cell A1 of sheet "'Sheet 1'" contains a bad value: logical (FALSE)
-    xlutils.filter ERROR
-      No output as errors have occurred.
-
   You can also configure the log level at which messages prevent the
   ErrorFilter from passing its method calls on to the next filter in
   the chain:

@@ -666,7 +666,7 @@ class ErrorFilter(BaseReader,BaseWriter):
         cell = self.rdsheet.cell(rdrowx,rdcolx)
         if cell.ctype == xlrd.XL_CELL_EMPTY:
             return
-        if cell.ctype in (xlrd.XL_CELL_ERROR, xlrd.XL_CELL_BOOLEAN):
+        if cell.ctype == xlrd.XL_CELL_ERROR:
             logger.error("Cell %s of sheet %r contains a bad value: %s" % (
                         xlrd.cellname(rdrowx, rdcolx),
                         quoted_sheet_name(self.rdsheet.name),

@@ -9,7 +9,7 @@ from StringIO import StringIO
 from tempfile import TemporaryFile
 from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
 from unittest import TestSuite,TestCase,makeSuite
-from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT
+from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT,XL_CELL_BOOLEAN
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader,XLWTWriter
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
 
@@ -529,6 +529,26 @@ class TestErrorFilter(TestCase):
             ('finish', (), {})
             ])
 
+    @log_capture()
+    def test_no_error_on_bools(self,h):
+        r = TestReader(
+            ('Sheet',[[(XL_CELL_BOOLEAN,True)]]),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        # fire methods on filter
+        f = ErrorFilter()
+        c = Mock()
+        process(r,f,c)
+        compare(c.method_calls,[
+            ('start', (), {}),
+            ('workbook', (C('xlrd.Book'), 'test.xls'),{}),
+            ('sheet', (C('xlrd.sheet.Sheet',name='Sheet',strict=False), u'Sheet'),{}),
+            ('row', (0, 0),{}),
+            ('cell', (0, 0, 0, 0),{}),
+            ('finish', (), {})
+            ])
+        self.assertEqual(len(h.records),0)
+    
 from xlutils.filter import ColumnTrimmer
 
 class TestColumnTrimmer(TestCase):
@@ -1169,6 +1189,19 @@ class TestBaseWriter(TestCase):
         cell = a.sheet_by_index(0).cell(0,0)
         self.assertEqual(cell.ctype,XL_CELL_ERROR)
         self.assertEqual(cell.value,0)
+    
+    def test_copy_boolean_cells(self):
+        r = TestReader(
+            ('Bools',([[(XL_CELL_BOOLEAN,True)]]),),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        w = TestWriter()
+        r(w)
+        self.assertEqual(w.files.keys(),['test.xls'])
+        a = open_workbook(file_contents=w.files['test.xls'].file.read())
+        cell = a.sheet_by_index(0).cell(0,0)
+        self.assertEqual(cell.ctype,XL_CELL_BOOLEAN)
+        self.assertEqual(cell.value,True)
     
 class TestDirectoryWriter(TestCase):
 
