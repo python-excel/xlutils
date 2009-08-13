@@ -37,7 +37,11 @@ class BaseReader:
         """
         for path in self.get_filepaths():
             yield (
-                xlrd.open_workbook(path, pickleable=0, formatting_info=1),
+                xlrd.open_workbook(
+                    path,
+                    pickleable=0,
+                    formatting_info=1,
+                    on_demand=True),
                 os.path.split(path)[1]
                 )
 
@@ -638,7 +642,19 @@ class ErrorFilter(BaseReader,BaseWriter):
         filenames.sort()
         for i,filename,pathname in filenames:
             yield (
-                xlrd.open_workbook(os.path.join(self.temp_path,pathname),pickleable=0,formatting_info=1),
+                # We currently don't open with on_demand=True here
+                # as error filters should be lastish in the chain
+                # so there's no much win.
+                # However, if we did, getting rid of the temp dirs
+                # becomes a problem as, on Windows, they can't be
+                # deleted until the xlrd.Book object is done with
+                # and we don't know when that might be :-(
+                xlrd.open_workbook(
+                    os.path.join(self.temp_path,pathname),
+                    pickleable=0,
+                    formatting_info=1,
+                    on_demand=False
+                    ),
                 filename
                 )
 

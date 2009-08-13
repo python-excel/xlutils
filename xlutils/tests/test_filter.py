@@ -61,6 +61,7 @@ class TestBaseReader(TestCase):
             ('workbook',(C('xlrd.Book',
                            pickleable=0,
                            formatting_info=1,
+                           on_demand=True,
                            strict=False),'test.xls'),{}),
             ('sheet',(C('xlrd.sheet.Sheet'),u'Sheet1'),{}),
             ('row',(0,0),{}),
@@ -382,6 +383,24 @@ from xlutils.filter import ErrorFilter
 
 class TestErrorFilter(TestCase):
 
+    def test_open_workbook_args(self):
+        r = TestReader(('Sheet1',[['X']]))
+        f = ErrorFilter()
+        m = Mock()
+        process(r,f,m)
+        compare(m.method_calls,[
+            ('start',(),{}),
+            ('workbook',(C('xlrd.Book',
+                           pickleable=0,
+                           formatting_info=1,
+                           on_demand=False,
+                           strict=False),'test.xls'),{}),
+            ('sheet',(C('xlrd.sheet.Sheet'),u'Sheet1'),{}),
+            ('row',(0,0),{}),
+            ('cell',(0,0,0,0),{}),
+            ('finish',(),{}),
+            ])
+        
     @log_capture()
     def test_set_rdsheet_1(self,h):
         r = TestReader(
