@@ -24,6 +24,7 @@ class DummyBook:
     _sheet_visibility = []
     xf_list = []
     datemode = 0
+    on_demand = False
 
     def __init__(self,formatting_info=0):
         self.formatting_info=formatting_info
@@ -38,6 +39,9 @@ class DummyBook:
 
     def sheet_by_index(self,i):
         return self.__sheets[i]
+
+    def unload_sheet(self,i):
+        pass
         
 def make_book(rows=[]):
     book = DummyBook()

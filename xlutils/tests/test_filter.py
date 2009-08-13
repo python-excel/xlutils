@@ -101,6 +101,68 @@ class TestBaseReader(TestCase):
         self.failUnless(f.method_calls[1][1][0] is book)
         self.failUnless(f.method_calls[2][1][0] is book.sheet_by_index(0))
     
+    class MockReader(BaseReader):
+        def __init__(self,book):
+            book.nsheets=2
+            book.sheet_by_index.side_effect = self.sheet_by_index
+            book.sheet0.nrows=1
+            book.sheet0.ncols=1
+            book.sheet0.name='sheet0'
+            book.sheet1.nrows=1
+            book.sheet1.ncols=1
+            book.sheet1.name='sheet1'
+            self.b = book
+            
+        def get_workbooks(self):
+            return [(self.b,str(id(self.b)))]
+        
+        def sheet_by_index(self,i):
+            return getattr(self.b,'sheet'+str(i))
+    
+    def test_on_demand_true(self):
+        m = Mock()
+        book = m.book
+        book.on_demand=True
+        r = self.MockReader(book)
+        f = m.filter
+        r(f)
+        compare(m.method_calls,[
+            ('filter.start', (), {}),
+            ('filter.workbook', (book, str(id(book))), {}),
+            ('book.sheet_by_index', (0,), {}),
+            ('filter.sheet',(book.sheet0, 'sheet0'),{}),
+            ('filter.row', (0, 0), {}),
+            ('filter.cell', (0, 0, 0, 0), {}),
+            ('book.unload_sheet', (0,), {}),
+            ('book.sheet_by_index', (1,), {}),
+            ('filter.sheet',(book.sheet1, 'sheet1'),{}),
+            ('filter.row', (0, 0), {}),
+            ('filter.cell', (0, 0, 0, 0), {}),
+            ('book.unload_sheet', (1,), {}),
+            ('filter.finish', (), {})
+            ])
+        
+    def test_on_demand_false(self):
+        m = Mock()
+        book = m.book
+        book.on_demand=False
+        r = self.MockReader(book)
+        f = m.filter
+        r(f)
+        compare(m.method_calls,[
+            ('filter.start', (), {}),
+            ('filter.workbook', (book, str(id(book))), {}),
+            ('book.sheet_by_index', (0,), {}),
+            ('filter.sheet',(book.sheet0, 'sheet0'),{}),
+            ('filter.row', (0, 0), {}),
+            ('filter.cell', (0, 0, 0, 0), {}),
+            ('book.sheet_by_index', (1,), {}),
+            ('filter.sheet',(book.sheet1, 'sheet1'),{}),
+            ('filter.row', (0, 0), {}),
+            ('filter.cell', (0, 0, 0, 0), {}),
+            ('filter.finish', (), {})
+            ])
+
 class TestBaseFilter(TestCase):
 
     def setUp(self):

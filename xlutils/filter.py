@@ -59,6 +59,8 @@ class BaseReader:
                     filter.row(row_x,row_x)
                     for col_x in xrange(sheet.ncols):
                         filter.cell(row_x,col_x,row_x,col_x)
+                if workbook.on_demand:
+                    workbook.unload_sheet(sheet_x)
         filter.finish()
     
 class BaseFilter:
