@@ -1076,6 +1076,19 @@ class TestBaseWriter(TestCase):
             'supplied name was 32 characters long!'
             ))(TestWriter())
 
+    def test_copy_error_cells(self):
+        r = TestReader(
+            ('Errors',([[(XL_CELL_ERROR,0)]]),),
+            )
+        book = tuple(r.get_workbooks())[0][0]
+        w = TestWriter()
+        r(w)
+        self.assertEqual(w.files.keys(),['test.xls'])
+        a = open_workbook(file_contents=w.files['test.xls'].file.read())
+        cell = a.sheet_by_index(0).cell(0,0)
+        self.assertEqual(cell.ctype,XL_CELL_ERROR)
+        self.assertEqual(cell.value,0)
+    
 class TestDirectoryWriter(TestCase):
 
     def test_inheritance(self):

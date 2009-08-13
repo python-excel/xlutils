@@ -465,7 +465,7 @@ class BaseWriter:
             wtrow.set_cell_blank(wtcolx, style)
         elif cty == xlrd.XL_CELL_BOOLEAN:
             wtrow.set_cell_boolean(wtcolx, cell.value, style)
-        elif cty == error_type:
+        elif cty == xlrd.XL_CELL_ERROR:
             wtrow.set_cell_error(wtcolx, cell.value, style)
         else:
             raise Exception(
