@@ -29,9 +29,11 @@ class DummyBook:
     def __init__(self,formatting_info=0):
         self.formatting_info=formatting_info
         self.__sheets = []
+        self.__name2sheet = {}
         
     def add(self,sheet):
         self.__sheets.append(sheet)
+        self.__name2sheet[sheet.name]=sheet
 
     @property
     def nsheets(self):
@@ -39,6 +41,9 @@ class DummyBook:
 
     def sheet_by_index(self,i):
         return self.__sheets[i]
+
+    def sheet_by_name(self,name):
+        return self.__name2sheet[name]
 
     def unload_sheet(self,i):
         pass
