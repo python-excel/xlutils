@@ -1,5 +1,3 @@
-# -*- coding: ascii -*-
-
 import sys, glob, string
 
 try:
@@ -100,7 +98,7 @@ def check_file(fname, verbose, do_punc=False, fmt_info=0, encoding='ascii'):
         pctwaste = 0.0
     print "%d cells => %d cells; %4.1f%% waste" % (totold, totnew, pctwaste)
                 
-if __name__ == "__main__":
+def main():
     import optparse
     usage = "%prog [options] input-file-patterns"
     oparser = optparse.OptionParser(usage)
@@ -138,3 +136,5 @@ if __name__ == "__main__":
                 e1, e2 = sys.exc_info()[:2]
                 print "*** File %s => %s:%s" % (fname, e1.__name__, e2)
     
+if __name__ == "__main__":
+    main()
