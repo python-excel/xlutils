@@ -37,6 +37,11 @@ setup(
     'xlwt >= 0.7.2',
     'errorhandler',
     ],
+    entry_points = {
+        'console_scripts': [
+            'margins = xlutils.margins:main',
+        ],
+        },
     extras_require=dict(
            test=[
             'mock',
