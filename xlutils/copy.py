@@ -4,7 +4,6 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
-from xlrd import open_workbook
 from xlutils.filter import process,XLRDReader,XLWTWriter
 
 def copy(wb):
