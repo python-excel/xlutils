@@ -105,6 +105,28 @@ Credits
 Changes
 =======
 
+1.4.0 (18 August 2009)
+----------------------
+
+- Add sheet density information and onesheet option to
+  xlutils.margins. 
+
+- Reduced the memory footprint of xlutils.filter.ColumnTrimmer at the
+  expense of speed.
+
+- Fixed incorrect warnings about boolean cells in
+  xlutils.filter.ErrorFilter. xlwt has always supported boolean
+  cells.
+
+- xlutils.filter.BaseReader now opens workbooks with on_demand = True
+
+- Added support for xlrd Books opened with on_demand as True passed to
+  open_workbook. 
+
+- Fixed bug when copying error cells.
+
+- Requres the latest versions of xlrd (0.7.1) and xlwt (0.7.2).
+
 1.3.2 (18 June 2009)
 -------------------
 
