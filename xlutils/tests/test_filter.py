@@ -749,7 +749,7 @@ class TestColumnTrimmer(TestCase):
         f.next = m = Mock()
         f.rdsheet = 'junk'
         f.pending_rdsheet = 'junk'
-        f.rows = 'junk'
+        f.ranges = 'junk'
         f.max_nonjunk = 'junk'
         f.max = 'junk'
 
@@ -757,7 +757,7 @@ class TestColumnTrimmer(TestCase):
 
         compare(f.rdsheet,None)
         compare(f.pending_rdsheet,None)
-        compare(f.rows,{})
+        compare(f.ranges,[])
         compare(f.max_nonjunk,0)
         compare(f.max,0)
 

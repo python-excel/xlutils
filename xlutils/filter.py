@@ -683,6 +683,20 @@ class ErrorFilter(BaseReader,BaseWriter):
             self(self.next)
         self.start(create=False)
 
+class Range(object):
+    __slots__ = ('rsn','rr','rc','wr','wc','r','c')
+    def __init__(self,rsn,rr,rc,wr,wc):
+        self.rsn = rsn
+        self.rr = rr
+        self.rc = rc
+        self.wr = wr
+        self.wc = wc
+        self.r = self.c = 1
+    def __repr__(self):
+        return '<range:%r:(%i,%i)->(%i,%i)-r:%i,c:%i>' % (
+            self.rsn,self.rr,self.rc,self.wr,self.wc,self.r,self.c
+            )
+
 class ColumnTrimmer(BaseFilter):
 
     def __init__(self,is_junk=None):
@@ -691,7 +705,7 @@ class ColumnTrimmer(BaseFilter):
     def start(self,chain=True):
         self.rdsheet = None
         self.pending_rdsheet = None
-        self.rows = {}
+        self.ranges = []
         self.max_nonjunk = 0
         self.max = 0
         if chain:
@@ -699,22 +713,28 @@ class ColumnTrimmer(BaseFilter):
         
     def flush(self):
         if self.rdsheet is not None:
-            for wtrowx in sorted(self.rows.keys()):
-                for e in self.rows[wtrowx]:
-                    if isinstance(e,tuple):
-                        rdrowx,rdcolx,wtcolx = e
+            rsn = None
+            for ra in self.ranges:
+                if rsn is None:
+                    rsn = ra.rsn
+                elif ra.rsn!=rsn:
+                    self.rdsheet = self.rdbook.sheet_by_name(ra.rsn)
+                    self.next.set_rdsheet(self.rdsheet)
+                    rsn = ra.rsn
+                for r in range(ra.r):
+                    for c in range(ra.c):
+                        wtcolx=ra.wc+c
                         if wtcolx<=self.max_nonjunk:
-                            self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
-                    else:
-                        self.next.set_rdsheet(e)
+                            self.next.cell(ra.rr+r,ra.rc+c,ra.wr+r,ra.wc+c)
             if self.max!=self.max_nonjunk:
                 logger.debug("Number of columns trimmed from %d to %d for sheet %r",
                              self.max+1,
                              self.max_nonjunk+1,
                              quoted_sheet_name(self.wtsheet_name))
         self.start(chain=False)
-                
+
     def workbook(self,rdbook,wtbook_name):
+        self.rdbook = rdbook
         self.flush()
         self.next.workbook(rdbook,wtbook_name)
         
@@ -728,18 +748,36 @@ class ColumnTrimmer(BaseFilter):
         self.pending_rdsheet = rdsheet
         self.rdsheet = rdsheet
     
+    def add_range(self,rdrowx,rdcolx,wtrowx,wtcolx):
+        if len(self.ranges)>1:
+            to_collapse = self.ranges[-1]
+            possible = self.ranges[-2]
+            if to_collapse.rc==possible.rc and \
+               to_collapse.c==possible.c and \
+               to_collapse.rr==possible.rr+possible.r:
+                possible.r+=to_collapse.r
+                self.ranges.pop()
+        self.ranges.append(Range(
+                self.rdsheet.name,rdrowx,rdcolx,wtrowx,wtcolx
+                ))
+        
     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
         if wtcolx>self.max:
             self.max = wtcolx
         cell = self.rdsheet.cell(rdrowx,rdcolx)
         if wtcolx>self.max_nonjunk and not cells_all_junk((cell,),self.is_junk):
             self.max_nonjunk = wtcolx
-        if wtrowx not in self.rows:
-            self.rows[wtrowx]=[]
-        if self.pending_rdsheet is not None:
-            self.rows[wtrowx].append(self.pending_rdsheet)
+        if not self.ranges:
+            self.add_range(rdrowx,rdcolx,wtrowx,wtcolx)
+        elif self.pending_rdsheet is not None: 
+            self.add_range(rdrowx,rdcolx,wtrowx,wtcolx)
             self.pending_rdsheet = None
-        self.rows[wtrowx].append((rdrowx,rdcolx,wtcolx))
+        else:
+            r = self.ranges[-1]
+            if rdrowx==r.rr and wtrowx==r.wr and rdcolx==r.rc+r.c and wtcolx==r.wc+r.c:
+                r.c+=1
+            else:
+                self.add_range(rdrowx,rdcolx,wtrowx,wtcolx)
                                                           
     def finish(self):
         self.flush()
