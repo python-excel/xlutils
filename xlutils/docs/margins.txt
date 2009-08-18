@@ -7,11 +7,11 @@ is taken up in an Excel file by cells containing no meaningful data.
 
 The following example shows how it is used as a script::
 
-  python xlsmargins.py [options] *.xls
+  python -m xlutils.margins [options] *.xls
 
 To get a list of the available options, do the following:
 
-  python xlsmargins.py --help
+  python -m xlutils.margins --help
 
 The module also provides the tools that do the work for the above
 script as helpful functions:
