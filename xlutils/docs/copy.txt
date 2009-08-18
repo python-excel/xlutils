@@ -37,3 +37,9 @@ This file can now be loaded using xlrd to see the changes:
 u'changed!'
 >>> rb.sheet_by_index(0).cell(0,1).value
 u'R0C1'
+
+NB: You should always pass on_demand=True to open_workbook as this
+uses much less memory:
+
+>>> rb = open_workbook(join(test_files,'testall.xls'),on_demand=True)
+>>> wb = copy(rb)
