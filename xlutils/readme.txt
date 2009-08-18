@@ -125,7 +125,7 @@ Changes
 
 - Fixed bug when copying error cells.
 
-- Requres the latest versions of xlrd (0.7.1) and xlwt (0.7.2).
+- Requires the latest versions of xlrd (0.7.1) and xlwt (0.7.2).
 
 1.3.2 (18 June 2009)
 -------------------
