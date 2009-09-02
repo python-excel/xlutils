@@ -578,7 +578,11 @@ class MethodFilter:
         self.call_on = methods
 
     def __getattr__(self,name):
-        return MethodFilterMethod(self,name)
+        if name in self.all_methods:
+            mfm = MethodFilterMethod(self,name)
+            setattr(self,name,mfm)
+            return mfm
+        raise AttributeError(name)
 
 class Echo(MethodFilter):
 

@@ -225,6 +225,9 @@ class TestMethodFilter(TestCase):
     def setUp(self):
         self.called = []
 
+    def test_cmp(self):
+        cmp(MethodFilter(),OurMethodFilter([]))
+        
     def do_calls_and_test(self,filter):
         filter.next = tf = Mock()
         filter.start()
