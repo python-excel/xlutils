@@ -254,6 +254,10 @@ class BaseWriter:
             if self.close_after_write:
                 stream.close()
             del self.wtbook
+            del self.rdbook
+            del self.rdsheet
+            del self.wtsheet
+            del self.style_list
 
     def workbook(self,rdbook,wtbook_name):
         self.close()        
@@ -691,6 +695,9 @@ class ErrorFilter(BaseReader,BaseWriter):
         else:
             self(self.next)
         self.start(create=False)
+        for attr in ('rdbook','rdsheet'):
+            if hasattr(self,attr):
+                delattr(self,attr)
 
 class Range(object):
     __slots__ = ('rsn','rr','rc','wr','wc','r','c')
@@ -790,6 +797,7 @@ class ColumnTrimmer(BaseFilter):
                                                           
     def finish(self):
         self.flush()
+        del self.rdbook
         self.next.finish()
         
 def process(reader,*chain):
