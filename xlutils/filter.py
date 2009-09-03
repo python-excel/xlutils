@@ -68,11 +68,13 @@ class BaseReader:
                     workbook.unload_sheet(sheet_x)
         filter.finish()
     
-class BaseFilter:
+class BaseFilterInterface:
     """
-    This is a simple filter that just calls the next filter in the
-    chain. The 'next' attribute is set up by the process method.
-    It can make a good base class for a new filter.
+    This is the filter interface that shows the correct way to call the 
+    next filter in the chain. 
+    The 'next' attribute is set up by the process method.
+    It can make a good base class for a new filter, but subclassing
+    BaseFilter below is often a better idea!
     """
 
     def start(self):
@@ -119,7 +121,6 @@ class BaseFilter:
         wtsheet_name - the name of the sheet into which content
                        should be written.
         """
-        self.rdsheet = rdsheet
         self.next.sheet(rdsheet,wtsheet_name)
        
     def set_rdsheet(self,rdsheet):
@@ -132,7 +133,6 @@ class BaseFilter:
                   this point forward should be read from.
 
         """
-        self.rdsheet = rdsheet
         self.next.set_rdsheet(rdsheet)
        
     def row(self,rdrowx,wtrowx):
@@ -183,6 +183,33 @@ class BaseFilter:
         from the previous batch.
         """
         self.next.finish()
+
+class BaseFilter:
+
+    all_methods = (
+        'start',
+        'workbook',
+        'sheet',
+        'set_rdsheet',
+        'row',
+        'cell',
+        'finish',
+        )
+
+    def sheet(self,rdsheet,wtsheet_name):
+        self.rdsheet = rdsheet
+        self.next.sheet(rdsheet,wtsheet_name)
+       
+    def set_rdsheet(self,rdsheet):
+        self.rdsheet = rdsheet
+        self.next.set_rdsheet(rdsheet)
+
+    def __getattr__(self,name):
+        if name not in self.all_methods:
+            raise AttributeError(name)
+        actual = getattr(self.next,name)
+        setattr(self,name,actual)
+        return actual
 
 class BaseWriter:
     """
@@ -533,23 +560,13 @@ class XLWTWriter(BaseWriter):
             self.output.append((self.wtname,self.wtbook))
             del self.wtbook
 
-class MethodFilter:
+class MethodFilter(BaseFilter):
     """
     This is a base class that implements functionality for filters
     that want to do a common task such as logging, printing or memory
     usage recording on certain calls configured at filter instantiation
     time.
     """
-
-    all_methods = (
-        'start',
-        'workbook',
-        'sheet',
-        'set_rdsheet',
-        'row',
-        'cell',
-        'finish',
-        )
     
     def method(self,name,*args):
         """
@@ -571,13 +588,6 @@ class MethodFilter:
     def caller(self,name,*args):
         self.method(name,*args)
         getattr(self.next,name)(*args)
-
-    def __getattr__(self,name):
-        if name not in self.all_methods:
-            raise AttributeError(name)
-        actual = getattr(self.next,name)
-        setattr(self,name,actual)
-        return actual
 
 class Echo(MethodFilter):
 
