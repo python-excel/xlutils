@@ -8,6 +8,7 @@ import logging
 import os
 import xlrd,xlwt
 
+from functools import partial
 from glob import glob
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -532,16 +533,6 @@ class XLWTWriter(BaseWriter):
             self.output.append((self.wtname,self.wtbook))
             del self.wtbook
 
-class MethodFilterMethod:
-
-    def __init__(self,mf,name):
-        self.mf,self.name = mf,name
-
-    def __call__(self,*args):
-        if self.name in self.mf.call_on:
-            self.mf.method(self.name,*args)
-        getattr(self.mf.next,self.name)(*args)
-        
 class MethodFilter:
     """
     This is a base class that implements functionality for filters
@@ -575,14 +566,18 @@ class MethodFilter:
         for name in methods:
             if name not in self.all_methods:
                 raise ValueError('%r is not a valid method name'%(name,))
-        self.call_on = methods
+            setattr(self,name,partial(self.caller,name))
+
+    def caller(self,name,*args):
+        self.method(name,*args)
+        getattr(self.next,name)(*args)
 
     def __getattr__(self,name):
-        if name in self.all_methods:
-            mfm = MethodFilterMethod(self,name)
-            setattr(self,name,mfm)
-            return mfm
-        raise AttributeError(name)
+        if name not in self.all_methods:
+            raise AttributeError(name)
+        actual = getattr(self.next,name)
+        setattr(self,name,actual)
+        return actual
 
 class Echo(MethodFilter):
 
