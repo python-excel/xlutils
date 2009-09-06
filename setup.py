@@ -45,7 +45,7 @@ setup(
     extras_require=dict(
            test=[
             'mock',
-            'testfixtures >= 1.5.3',
+            'testfixtures >= 1.6.1',
             ],
            )
     )

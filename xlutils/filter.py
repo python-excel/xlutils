@@ -606,9 +606,9 @@ class Echo(MethodFilter):
         
 try:
     from guppy import hpy
-    h = hpy()
+    guppy = True
 except ImportError:
-    h = None
+    guppy = False
     
 class MemoryLogger(MethodFilter):
 
@@ -617,9 +617,15 @@ class MemoryLogger(MethodFilter):
         self.path = path
         
     def method(self,name,*args):
-        if h is not None:
-            h.heap().stat.dump(self.path)
-        
+        if guppy:
+            # We instantiate the heapy environment here
+            # so that the memory it consumes doesn't hang
+            # around for the whole process
+            hpy().heap().stat.dump(self.path)
+        else:
+            logger.error('guppy is not availabe, cannot log memory usage!')
+            
+            
 class ErrorFilter(BaseReader,BaseWriter):
 
     temp_path = None

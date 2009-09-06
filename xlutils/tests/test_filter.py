@@ -367,17 +367,22 @@ class TestMemoryLogger(TestCase):
         from xlutils.filter import MemoryLogger
         self.filter = MemoryLogger('somepath',['workbook'])
 
-    @replace('xlutils.filter.h',Mock())
-    def test_method(self,h):
+    @replace('xlutils.filter.guppy',True)
+    @replace('xlutils.filter.hpy',Mock(),strict=False)
+    def test_method(self,hpy):
         self.filter.method('name','foo',1)
-        # h.heap().stat.dump('somepath')
-        compare(h.method_calls,[('heap',(),{})])
-        h = h.heap.return_value
+        # hpy().heap().stat.dump('somepath')
+        compare(hpy.call_args_list,[((),{})])
+        hpy_i = hpy.return_value
+        compare(hpy_i.method_calls,[('heap',(),{})])
+        h = hpy_i.heap.return_value
         compare(h.method_calls,[('stat.dump', ('somepath',),{})])
     
-    @replace('xlutils.filter.h',None)
-    def test_method_no_heapy(self):
+    @replace('xlutils.filter.guppy',False)
+    @replace('xlutils.filter.hpy',Mock(),strict=False)
+    def test_method_no_heapy(self,hpy):
         self.filter.method('name','foo',1)
+        compare(hpy.call_args_list,[])
     
     def test_inheritance(self):
         self.failUnless(isinstance(self.filter,MethodFilter))

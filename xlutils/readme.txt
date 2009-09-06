@@ -114,6 +114,8 @@ Changes
 - Speed optimisations for xlutils.filter.BaseFilter, bringing those
   benefits to all subclasses.
 
+- Memory usage reduction when using MemoryLogger
+
 1.4.0 (18 August 2009)
 ----------------------
 
