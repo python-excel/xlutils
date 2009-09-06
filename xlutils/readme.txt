@@ -105,6 +105,15 @@ Credits
 Changes
 =======
 
+1.4.1 (6 September 2009)
+------------------------
+
+- Removal of references in the `finish` methods of several filters,
+  easing memory usage in large filtering runs
+
+- Speed optimisations for xlutils.filter.BaseFilter, bringing those
+  benefits to all subclasses.
+
 1.4.0 (18 August 2009)
 ----------------------
 
