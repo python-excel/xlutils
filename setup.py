@@ -1,4 +1,4 @@
-# Copyright (c) 2008-2009 Simplistix Ltd
+# Copyright (c) 2008-2010 Simplistix Ltd
 #
 # This Software is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license.html
@@ -33,8 +33,8 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-    'xlrd >= 0.7.1',
-    'xlwt >= 0.7.2',
+    'xlrd > 0.7.1',
+    'xlwt > 0.7.2',
     'errorhandler',
     ],
     entry_points = {

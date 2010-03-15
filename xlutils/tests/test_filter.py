@@ -1050,13 +1050,7 @@ class TestBaseWriter(TestCase):
                         l_e_xf_list=17,
                         l_a_format_map=37,
                         l_a_font_list=6,
-                        l_e_font_list=6,
-                        sheet=dict(
-                            # as of xlwt 0.7.2, these default values
-                            # are written if none are provided :-(
-                            cached_page_break_preview_mag_factor=60,
-                            cached_normal_view_mag_factor=100,
-                            ))
+                        l_e_font_list=6)
 
     def test_multiple_workbooks(self):
         # globreader is tested elsewhere

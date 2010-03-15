@@ -25,6 +25,7 @@ class DummyBook:
     xf_list = []
     datemode = 0
     on_demand = False
+    ragged_rows = False
 
     def __init__(self,formatting_info=0):
         self.formatting_info=formatting_info
