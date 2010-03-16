@@ -1,4 +1,4 @@
-# Copyright (c) 2008-2009 Simplistix Ltd
+# Copyright (c) 2008-2010 Simplistix Ltd
 #
 # This Software is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license.html
@@ -10,7 +10,7 @@ from tempfile import TemporaryFile
 from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT,XL_CELL_BOOLEAN
-from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader,XLWTWriter
+from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader,XLWTWriter, BaseFilter
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
 
 import os
@@ -48,6 +48,18 @@ class TestBaseReader(TestCase):
         should_raise(r,NotImplementedError())(f)
         self.assertEqual(f.method_calls,[('start',(),{})])
         
+    def test_ragged_rows(self):
+        class TestReader(BaseReader):
+            def get_filepaths(self):
+                return (os.path.join(test_files,'ragged.xls'),)
+        t = TestReader()
+        class TestFilter(BaseFilter):
+            def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
+                self.rdsheet.cell(rdrowx,rdcolx)
+        f = TestFilter()
+        f.next = Mock()
+        t(f)
+    
     def test_custom_filepaths(self):
         # also tests the __call__ method
         class TestReader(BaseReader):
@@ -62,6 +74,7 @@ class TestBaseReader(TestCase):
                            pickleable=0,
                            formatting_info=1,
                            on_demand=True,
+                           ragged_rows=True,
                            strict=False),'test.xls'),{}),
             ('sheet',(C('xlrd.sheet.Sheet'),u'Sheet1'),{}),
             ('row',(0,0),{}),
@@ -108,9 +121,11 @@ class TestBaseReader(TestCase):
             book.sheet_by_index.side_effect = self.sheet_by_index
             book.sheet0.nrows=1
             book.sheet0.ncols=1
+            book.sheet0.row_len.return_value = 1
             book.sheet0.name='sheet0'
             book.sheet1.nrows=1
             book.sheet1.ncols=1
+            book.sheet1.row_len.return_value = 1
             book.sheet1.name='sheet1'
             self.b = book
             
@@ -133,11 +148,13 @@ class TestBaseReader(TestCase):
             ('book.sheet_by_index', (0,), {}),
             ('filter.sheet',(book.sheet0, 'sheet0'),{}),
             ('filter.row', (0, 0), {}),
+            ('book.sheet0.row_len', (0,), {}),
             ('filter.cell', (0, 0, 0, 0), {}),
             ('book.unload_sheet', (0,), {}),
             ('book.sheet_by_index', (1,), {}),
             ('filter.sheet',(book.sheet1, 'sheet1'),{}),
             ('filter.row', (0, 0), {}),
+            ('book.sheet1.row_len', (0,), {}),
             ('filter.cell', (0, 0, 0, 0), {}),
             ('book.unload_sheet', (1,), {}),
             ('filter.finish', (), {})
@@ -156,10 +173,12 @@ class TestBaseReader(TestCase):
             ('book.sheet_by_index', (0,), {}),
             ('filter.sheet',(book.sheet0, 'sheet0'),{}),
             ('filter.row', (0, 0), {}),
+            ('book.sheet0.row_len', (0,), {}),
             ('filter.cell', (0, 0, 0, 0), {}),
             ('book.sheet_by_index', (1,), {}),
             ('filter.sheet',(book.sheet1, 'sheet1'),{}),
             ('filter.row', (0, 0), {}),
+            ('book.sheet1.row_len', (0,), {}),
             ('filter.cell', (0, 0, 0, 0), {}),
             ('filter.finish', (), {})
             ])
@@ -402,6 +421,7 @@ class TestErrorFilter(TestCase):
                            pickleable=0,
                            formatting_info=1,
                            on_demand=False,
+                           ragged_rows=True,
                            strict=False),'test.xls'),{}),
             ('sheet',(C('xlrd.sheet.Sheet'),u'Sheet1'),{}),
             ('row',(0,0),{}),
@@ -683,7 +703,7 @@ class TestColumnTrimmer(TestCase):
 
     @log_capture()
     def test_multiple_books(self,h):
-        r = GlobReader(os.path.join(test_files,'*.xls'))
+        r = GlobReader(os.path.join(test_files,'test*.xls'))
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ColumnTrimmer()
@@ -1054,7 +1074,7 @@ class TestBaseWriter(TestCase):
 
     def test_multiple_workbooks(self):
         # globreader is tested elsewhere
-        r = GlobReader(os.path.join(test_files,'*.xls'))
+        r = GlobReader(os.path.join(test_files,'test*.xls'))
         # send straight to writer
         w = TestWriter()
         r(w)
@@ -1252,7 +1272,7 @@ class TestXLWTWriter(TestCase):
         compare(self.w.wtbook,None)
         
     def test_multiple_files(self):
-        r = GlobReader(os.path.join(test_files,'*.xls'))
+        r = GlobReader(os.path.join(test_files,'test*.xls'))
         r(self.w)
         compare(self.w.output,[
             ('test.xls',C('xlwt.Workbook')),

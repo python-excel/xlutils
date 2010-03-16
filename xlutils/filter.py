@@ -42,7 +42,8 @@ class BaseReader:
                     path,
                     pickleable=0,
                     formatting_info=1,
-                    on_demand=True),
+                    on_demand=True,
+                    ragged_rows=True),
                 os.path.split(path)[1]
                 )
 
@@ -62,7 +63,7 @@ class BaseReader:
                 filter.sheet(sheet,sheet.name)
                 for row_x in xrange(sheet.nrows):
                     filter.row(row_x,row_x)
-                    for col_x in xrange(sheet.ncols):
+                    for col_x in xrange(sheet.row_len(row_x)):
                         filter.cell(row_x,col_x,row_x,col_x)
                 if workbook.on_demand:
                     workbook.unload_sheet(sheet_x)
@@ -663,7 +664,7 @@ class ErrorFilter(BaseReader,BaseWriter):
             yield (
                 # We currently don't open with on_demand=True here
                 # as error filters should be lastish in the chain
-                # so there's no much win.
+                # so there's not much win.
                 # However, if we did, getting rid of the temp dirs
                 # becomes a problem as, on Windows, they can't be
                 # deleted until the xlrd.Book object is done with
@@ -672,7 +673,8 @@ class ErrorFilter(BaseReader,BaseWriter):
                     os.path.join(self.temp_path,pathname),
                     pickleable=0,
                     formatting_info=1,
-                    on_demand=False
+                    on_demand=False,
+                    ragged_rows=True
                     ),
                 filename
                 )
