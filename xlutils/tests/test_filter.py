@@ -29,13 +29,13 @@ class TestReader(BaseReader):
         for name,value in sorted(books.items()):
             self.makeBook(name,value)
         
-    def makeBook(self,sheet_name,sheets):
+    def makeBook(self,book_name,sheets):
         book = DummyBook(self.formatting_info)
         index = 0
         for name,rows in sheets:
             make_sheet(rows,book,name,index)
             index+=1
-        self.books.append((book,sheet_name+'.xls'))
+        self.books.append((book,book_name+'.xls'))
         
     def get_workbooks(self):
         return self.books
