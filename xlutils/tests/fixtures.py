@@ -20,17 +20,17 @@ class DummyBook:
     logfile = sys.stdout
     pickleable = False
     verbosity = 0
-    _xf_index_to_xl_type_map = {}
-    _sheet_visibility = []
-    xf_list = []
     datemode = 0
     on_demand = False
-    ragged_rows = False
+    ragged_rows = True
 
     def __init__(self,formatting_info=0):
         self.formatting_info=formatting_info
         self.__sheets = []
         self.__name2sheet = {}
+        self._xf_index_to_xl_type_map = {}
+        self._sheet_visibility = []
+        self.xf_list = []
         
     def add(self,sheet):
         self.__sheets.append(sheet)
