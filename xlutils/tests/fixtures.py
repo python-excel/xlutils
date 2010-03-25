@@ -54,7 +54,7 @@ def make_book(rows=[]):
     sheet = make_sheet(rows,book=book)
     return book
 
-def make_sheet(rows,book=None,name='test sheet',number=0):
+def make_sheet(rows=(),book=None,name='test sheet',number=0):
     if book is None:
         book = DummyBook()
     book._sheet_visibility.append(0)
@@ -69,4 +69,5 @@ def make_sheet(rows,book=None,name='test sheet',number=0):
             else:
                 cell_type=XL_CELL_TEXT
             sheet.put_cell(rowx,colx,cell_type,value,0)
+    sheet.tidy_dimensions()
     return sheet
