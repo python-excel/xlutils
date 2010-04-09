@@ -8,13 +8,15 @@ import sys
 import os.path
 
 from xlrd import XL_CELL_TEXT,Book
+from xlrd.formatting import XF, XFAlignment, XFBorder, XFBackground, XFProtection
+
 from xlrd.sheet import Sheet
 
 test_files = os.path.dirname(__file__)
 
 test_xls_path = os.path.join(test_files,'test.xls')
 
-class DummyBook:
+class DummyBook(Book):
 
     biff_version = 80
     logfile = sys.stdout
@@ -22,33 +24,20 @@ class DummyBook:
     verbosity = 0
     datemode = 0
     on_demand = False
-    ragged_rows = True
 
-    def __init__(self,formatting_info=0):
+    def __init__(self,
+                 formatting_info=0,
+                 ragged_rows=False,
+                 ):
+        Book.__init__(self)
         self.formatting_info=formatting_info
-        self.__sheets = []
-        self.__name2sheet = {}
-        self._xf_index_to_xl_type_map = {}
-        self._sheet_visibility = []
-        self.xf_list = []
+        self.ragged_rows = ragged_rows
         
     def add(self,sheet):
-        self.__sheets.append(sheet)
-        self.__name2sheet[sheet.name]=sheet
+        self._sheet_names.append(sheet.name)
+        self._sheet_list.append(sheet)
+        self.nsheets = len(self._sheet_list)
 
-    @property
-    def nsheets(self):
-        return len(self.__sheets)
-
-    def sheet_by_index(self,i):
-        return self.__sheets[i]
-
-    def sheet_by_name(self,name):
-        return self.__name2sheet[name]
-
-    def unload_sheet(self,i):
-        pass
-        
 def make_book(rows=[]):
     book = DummyBook()
     sheet = make_sheet(rows,book=book)
