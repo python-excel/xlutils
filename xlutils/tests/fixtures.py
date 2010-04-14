@@ -8,7 +8,8 @@ import sys
 import os.path
 
 from xlrd import XL_CELL_TEXT,Book
-from xlrd.formatting import XF, XFAlignment, XFBorder, XFBackground, XFProtection
+from xlrd.biffh import FUN 
+from xlrd.formatting import XF, Format, Font, XFAlignment, XFBorder, XFBackground, XFProtection
 
 from xlrd.sheet import Sheet
 
@@ -30,8 +31,19 @@ class DummyBook(Book):
                  ragged_rows=False,
                  ):
         Book.__init__(self)
-        self.formatting_info=formatting_info
         self.ragged_rows = ragged_rows
+        self.formatting_info=formatting_info
+        self.initialise_format_info()
+        if formatting_info:
+            f = Font()
+            self.font_list.append(f)
+            self.format_map[0]= Format(0,FUN,u'General')
+            xf = XF()
+            xf.alignment = XFAlignment()
+            xf.border = XFBorder()
+            xf.background = XFBackground()
+            xf.protection = XFProtection()
+            self.xf_list.append(xf)
         
     def add(self,sheet):
         self._sheet_names.append(sheet.name)
@@ -48,6 +60,7 @@ def make_sheet(rows=(),book=None,name='test sheet',number=0):
         book = DummyBook()
     book._sheet_visibility.append(0)
     sheet = Sheet(book,0,name,number)
+    
     book.add(sheet)
     for rowx in range(len(rows)):
         row = rows[rowx]
