@@ -10,6 +10,7 @@ from tempfile import TemporaryFile
 from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT,XL_CELL_BOOLEAN
+from xlrd.formatting import XF
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader,XLWTWriter, BaseFilter
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
 
@@ -885,8 +886,8 @@ class TestBaseWriter(TestCase):
                 'first_visible_rowx',
                 'first_visible_colx',
                 'gridline_colour_index',
-                'cached_page_break_preview_mag_factor',
-                'cached_normal_view_mag_factor',
+                'cooked_page_break_preview_mag_factor',
+                'cooked_normal_view_mag_factor',
                 'default_row_height',
                 'default_row_height_mismatch',
                 'default_row_hidden',
@@ -895,6 +896,11 @@ class TestBaseWriter(TestCase):
                 'nrows',
                 'ncols',
                 'standardwidth',
+                'vert_split_pos',
+                'horz_split_pos',
+                'vert_split_first_visible',
+                'horz_split_first_visible',
+                'split_active_pane',
                 )
             for col_x in range(ash.ncols):
                 ac = ash.colinfo_map.get(col_x)
@@ -1181,6 +1187,36 @@ class TestBaseWriter(TestCase):
         a = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
         self.assertEqual(a.sheet_names(),[name])
         
+    def test_panes(self):
+        r = TestReader()
+        r.formatting_info = True
+        
+        r.setup(('sheet',[['S1R0C0']]))
+        
+        book = tuple(r.get_workbooks())[0][0]
+        sheet = book.sheet_by_index(0)
+        sheet.panes_are_frozen = 1
+        sheet.has_pane_record = True
+        sheet.vert_split_pos = 1
+        sheet.horz_split_pos = 2
+        sheet.vert_split_first_visible = 3
+        sheet.horz_split_first_visible = 4
+        sheet.split_active_pane = 3
+        
+        w = TestWriter()
+        r(w)
+        self.assertEqual(w.files.keys(),['test.xls'])
+        f = w.files['test.xls'].file
+        a = open_workbook(file_contents=f.read(),formatting_info=1)
+        sheet = a.sheet_by_index(0)
+        self.assertEqual(1,sheet.panes_are_frozen)
+        self.assertEqual(1,sheet.has_pane_record)
+        self.assertEqual(1,sheet.vert_split_pos)
+        self.assertEqual(2,sheet.horz_split_pos)
+        self.assertEqual(3,sheet.vert_split_first_visible)
+        self.assertEqual(4,sheet.horz_split_first_visible)
+        self.assertEqual(3,sheet.split_active_pane)
+        
     def test_excessive_length_sheet_name(self):
         r = TestReader(
             ('X'*32,([['S1R0C0']]),),
@@ -1400,12 +1436,16 @@ class TestTestReader(TestCase):
         book = r.books[0][0]
         sx,rx,cx = 0,0,0
         book.sheet_by_index(sx)._cell_xf_indexes[rx][cx]=42
-
         # NB: cells where you haven't specified an xf index manually as
         #     above will have an xf index of 0:
         compare(book.sheet_by_index(0).cell(0,1).xf_index,0)
-        # and no matching style:
-        should_raise(book.xf_list,IndexError)[0]
+
+        # NB: when formattng is turned on, an XF will be created at index zero:
+        compare(C(XF),book.xf_list[0])
+        # ...but no others:
+        should_raise(book.xf_list,IndexError)[42]
+        # so you'll need to manually create them if you need them.
+        # See fixtures.py for examples.
 
         r(f)
         

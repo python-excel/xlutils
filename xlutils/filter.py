@@ -418,12 +418,13 @@ class BaseWriter:
         wtsheet.first_visible_row = rdsheet.first_visible_rowx
         wtsheet.first_visible_col = rdsheet.first_visible_colx
         wtsheet.grid_colour = rdsheet.gridline_colour_index
-        wtsheet.preview_magn = rdsheet.cached_page_break_preview_mag_factor
-        wtsheet.normal_magn = rdsheet.cached_normal_view_mag_factor
+        wtsheet.preview_magn = rdsheet.cooked_page_break_preview_mag_factor
+        wtsheet.normal_magn = rdsheet.cooked_normal_view_mag_factor
         #
         # DEFAULTROWHEIGHT
         #
-        wtsheet.row_default_height =          rdsheet.default_row_height
+        if rdsheet.default_row_height is not None:
+            wtsheet.row_default_height =          rdsheet.default_row_height
         wtsheet.row_default_height_mismatch = rdsheet.default_row_height_mismatch
         wtsheet.row_default_hidden =          rdsheet.default_row_hidden
         wtsheet.row_default_space_above =     rdsheet.default_additional_space_above
@@ -433,6 +434,17 @@ class BaseWriter:
         #
         wtsheet.visibility = rdsheet.visibility
        
+        #
+        # PANE
+        #
+        if rdsheet.has_pane_record:
+            wtsheet.split_position_units_are_twips = True
+            wtsheet.active_pane =              rdsheet.split_active_pane
+            wtsheet.horz_split_pos =           rdsheet.horz_split_pos
+            wtsheet.horz_split_first_visible = rdsheet.horz_split_first_visible
+            wtsheet.vert_split_pos =           rdsheet.vert_split_pos
+            wtsheet.vert_split_first_visible = rdsheet.vert_split_first_visible
+            
     def set_rdsheet(self,rdsheet):
         self.rdsheet = rdsheet
         
