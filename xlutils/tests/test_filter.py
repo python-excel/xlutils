@@ -1205,6 +1205,7 @@ class TestBaseWriter(TestCase):
         
         w = TestWriter()
         r(w)
+        
         self.assertEqual(w.files.keys(),['test.xls'])
         f = w.files['test.xls'].file
         a = open_workbook(file_contents=f.read(),formatting_info=1)
@@ -1216,6 +1217,29 @@ class TestBaseWriter(TestCase):
         self.assertEqual(3,sheet.vert_split_first_visible)
         self.assertEqual(4,sheet.horz_split_first_visible)
         self.assertEqual(3,sheet.split_active_pane)
+        
+    def test_zoom_factors(self):
+        r = TestReader()
+        r.formatting_info = True
+        
+        r.setup(('sheet',[['S1R0C0']]))
+        
+        book = tuple(r.get_workbooks())[0][0]
+        sheet = book.sheet_by_index(0)
+        sheet.cooked_normal_view_mag_factor = 33
+        sheet.cooked_page_break_preview_mag_factor = 44
+        sheet.show_in_page_break_preview = True
+
+        w = TestWriter()
+        r(w)
+        
+        self.assertEqual(w.files.keys(),['test.xls'])
+        f = w.files['test.xls'].file
+        a = open_workbook(file_contents=f.read(),formatting_info=1)
+        sheet = a.sheet_by_index(0)
+        self.assertEqual(33,sheet.cooked_normal_view_mag_factor)
+        self.assertEqual(44,sheet.cooked_page_break_preview_mag_factor)
+        self.assertEqual(1,sheet.show_in_page_break_preview)
         
     def test_excessive_length_sheet_name(self):
         r = TestReader(
