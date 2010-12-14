@@ -4,7 +4,8 @@ xlutils
 
 This package provides a collection of utilities for working with Excel
 files. Since these utilities may require either or both of the xlrd
-and xlwt packages, they are collected together seperately here.
+and xlwt packages, they are collected together here, separate from either
+package.
 
 Currently available are:
 
