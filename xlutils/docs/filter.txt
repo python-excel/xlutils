@@ -400,7 +400,12 @@ Available Filters
   NB: To be effective, this filter must be the last in the chain
       before the writer!
 
-  Here's an example of how to set one up:
+  Here's an example of how to set one up. We need to be able to see
+  what messages are logged, so we use a log capture:
+
+  >>> h = LogCapture()
+
+  Now, we install the filter:
 
   >>> from xlutils.filter import process,ErrorFilter
   >>> f = ErrorFilter()
@@ -416,10 +421,6 @@ Available Filters
   ...        if wtbook_name=='test.xls':
   ...            logging.getLogger('theLogger').log(self.level,'a message')
   ...        self.next.workbook(rdbook,wtbook_name)
-
-  We also need to be able to see what messages are logged:
-
-  >>> h = LogCapture()
 
   So, when we have errors logged, no methods other than finish are
   passed on to the next filter:
