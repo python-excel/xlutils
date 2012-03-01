@@ -1,0 +1,13 @@
+/.installed.cfg
+/bin/
+/develop-eggs
+/dist
+/docs/_build
+/eggs
+/*.egg-info/
+/parts/
+*.pyc
+/.coverage
+/*.xml
+/.tox
+/htmlcov
