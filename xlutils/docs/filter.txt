@@ -297,7 +297,7 @@ Available Writers
 
   >>> temp_dir = TempDirectory()
   >>> temp_dir.listdir()
-  
+  No files or directories found.
   >>> book.save(os.path.join(temp_dir.path,w.output[0][0]))
   >>> temp_dir.listdir()
   test.xls

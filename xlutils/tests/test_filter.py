@@ -1,4 +1,4 @@
-# Copyright (c) 2008-2010 Simplistix Ltd
+# Copyright (c) 2008-2012 Simplistix Ltd
 #
 # This Software is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license.html
@@ -1284,7 +1284,7 @@ class TestDirectoryWriter(TestCase):
         from xlutils.filter import DirectoryWriter
         self.failUnless(isinstance(DirectoryWriter('foo'),BaseWriter))
 
-    @tempdir
+    @tempdir()
     def test_plus_in_workbook_name(self,d):
         from xlutils.filter import DirectoryWriter
         r = TestReader(

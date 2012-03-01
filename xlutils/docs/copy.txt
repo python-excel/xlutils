@@ -26,6 +26,7 @@ Before saving the changed workbook to a file:
 
 >>> temp_dir = TempDirectory()
 >>> temp_dir.listdir()
+No files or directories found.
 >>> wb.save(join(temp_dir.path,'output.xls'))
 >>> temp_dir.listdir()
 output.xls
