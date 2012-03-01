@@ -1,4 +1,4 @@
-# Copyright (c) 2008-2009 Simplistix Ltd
+# Copyright (c) 2008-2012 Simplistix Ltd
 #
 # This Software is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license.html
@@ -7,7 +7,7 @@
 import os,unittest
 from fixtures import test_files
 from testfixtures import LogCapture,TempDirectory
-from zope.testing.doctest import DocFileSuite, REPORT_NDIFF,ELLIPSIS
+from doctest import DocFileSuite, REPORT_NDIFF, ELLIPSIS
 
 options = REPORT_NDIFF|ELLIPSIS
 
