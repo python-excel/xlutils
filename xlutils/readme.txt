@@ -105,6 +105,12 @@ Credits
 Changes
 =======
 
+1.5.1 (5 March 2012)
+--------------------
+
+- Include non-.py files that got skipped as a result of the move from
+  subversion to git. 
+
 1.5.0 (5 March 2012)
 --------------------
 
