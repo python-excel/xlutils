@@ -23,8 +23,7 @@ setup(
     url='http://www.simplistix.co.uk/software/python/xlutils',
     keywords="excel xls xlrd xlwt",
     classifiers=[
-    'Development Status :: 5 - Production/Stable',
-    # 'Development Status :: 6 - Mature',
+    'Development Status :: 6 - Mature',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
     'Topic :: Office/Business :: Financial :: Spreadsheet',
@@ -33,8 +32,8 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-    'xlrd > 0.7.1',
-    'xlwt > 0.7.2',
+    'xlrd >= 0.7.3',
+    'xlwt >= 0.7.3',
     'errorhandler',
     ],
     entry_points = {
@@ -53,7 +52,7 @@ setup(
 # to build and upload the eggs, do:
 # python setup.py sdist bdist_egg bdist_wininst register upload
 # ...or...
-#  bin/buildout setup setup.py sdist bdist_egg bdist_wininst register upload
+#  bin/buildout setup setup.py sdist register upload
 # ...on a unix box!
 
 # To check how things will show on pypi, install docutils and then:

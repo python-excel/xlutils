@@ -105,6 +105,14 @@ Credits
 Changes
 =======
 
+1.5.0 (5 March 2012)
+--------------------
+
+- Take advantage of "ragged rows" optimisation in xlrd 0.7.3
+
+- Add support for PANE records to xlutils.copy, which means that zoom
+  factors are now copied.
+
 1.4.1 (6 September 2009)
 ------------------------
 
