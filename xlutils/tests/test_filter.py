@@ -828,8 +828,8 @@ class TestBaseWriter(TestCase):
     def check_file(self,writer,path,
                    l_a_xf_list=20,
                    l_e_xf_list=26,
-                   l_a_format_map=38,
-                   l_e_format_map=37,
+                   l_a_format_map=76,
+                   l_e_format_map=75,
                    l_a_font_list=9,
                    l_e_font_list=7,
                    **provided_overrides):
@@ -999,8 +999,8 @@ class TestBaseWriter(TestCase):
             
         # xlwt writes more formats than exist in an original,
         # but we check those copied are identical
-        self.assertEqual(len(a.format_map),l_a_format_map)
-        self.assertEqual(len(e.format_map),l_e_format_map)
+        self.assertEqual(len(a.format_map), l_a_format_map)
+        self.assertEqual(len(e.format_map), l_e_format_map)
         for ai,eis in self.noted_indexes['format_key'].items():
             af = a.format_map[ai]
             for ei in eis:
@@ -1067,7 +1067,7 @@ class TestBaseWriter(TestCase):
         self.check_file(w,test_xls_path,
                         l_a_xf_list=17,
                         l_e_xf_list=17,
-                        l_a_format_map=37,
+                        l_a_format_map=75,
                         l_a_font_list=6,
                         l_e_font_list=6)
 
@@ -1084,9 +1084,9 @@ class TestBaseWriter(TestCase):
         self.failUnless('testnoformatting.xls' in w.closed)
         self.check_file(w,os.path.join(test_files,'testall.xls'))
         self.check_file(w,os.path.join(test_files,'test.xls'),
-                        18,21,38,37,7,4)
+                        18,21,76,75,7,4)
         self.check_file(w,os.path.join(test_files,'testnoformatting.xls'),
-                        18,17,37,37,6,6)
+                        18,17,75,75,6,6)
     
     def test_start(self):
         w = TestWriter()
