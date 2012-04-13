@@ -11,7 +11,7 @@ from StringIO import StringIO
 from tempfile import TemporaryFile
 from testfixtures import compare, Comparison as C, replace, log_capture, ShouldRaise, tempdir
 from unittest import TestSuite,TestCase,makeSuite
-from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT,XL_CELL_BOOLEAN
+from xlrd import open_workbook, XL_CELL_NUMBER, XL_CELL_ERROR, XL_CELL_BOOLEAN
 from xlrd.formatting import XF
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader,XLWTWriter, BaseFilter
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
@@ -565,7 +565,6 @@ class TestErrorFilter(TestCase):
         r = TestReader(
             ('Sheet',[[(XL_CELL_BOOLEAN,True)]]),
             )
-        book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ErrorFilter()
         c = Mock()
@@ -707,7 +706,6 @@ class TestColumnTrimmer(TestCase):
     @log_capture()
     def test_multiple_books(self,h):
         r = GlobReader(os.path.join(test_files,'test*.xls'))
-        book = tuple(r.get_workbooks())[0][0]
         # fire methods on filter
         f = ColumnTrimmer()
         f.next = c = Mock()
@@ -1059,7 +1057,6 @@ class TestBaseWriter(TestCase):
         test_xls_path = os.path.join(test_files,'testnoformatting.xls')
         r = XLRDReader(open_workbook(os.path.join(test_files,'testall.xls')),'testnoformatting.xls')
         # source sheet must have merged cells for test!
-        book = tuple(r.get_workbooks())[0][0]
         # send straight to writer
         w = TestWriter()
         r(w)
@@ -1160,7 +1157,6 @@ class TestBaseWriter(TestCase):
             ('sheet',([['S1R0C0']]),),
             ('Sheet',([['S2R0C0']]),),
             )
-        book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
         with ShouldRaise(ValueError(
             "A sheet named 'sheet' has already been added!"
@@ -1171,7 +1167,6 @@ class TestBaseWriter(TestCase):
         r = TestReader(
             ('',([['S1R0C0']]),),
             )
-        book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
         with ShouldRaise(ValueError(
             'Empty sheet name will result in invalid Excel file!'
@@ -1183,7 +1178,6 @@ class TestBaseWriter(TestCase):
         r = TestReader(
             (name,([['S1R0C0']]),),
             )
-        book = tuple(r.get_workbooks())[0][0]
         w = TestWriter()
         r(w)
         self.assertEqual(w.files.keys(),['test.xls'])
@@ -1249,7 +1243,6 @@ class TestBaseWriter(TestCase):
         r = TestReader(
             ('X'*32,([['S1R0C0']]),),
             )
-        book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
         with ShouldRaise(ValueError(
             'Sheet name cannot be more than 31 characters long, '
@@ -1261,7 +1254,6 @@ class TestBaseWriter(TestCase):
         r = TestReader(
             ('Errors',([[(XL_CELL_ERROR,0)]]),),
             )
-        book = tuple(r.get_workbooks())[0][0]
         w = TestWriter()
         r(w)
         self.assertEqual(w.files.keys(),['test.xls'])
@@ -1274,7 +1266,6 @@ class TestBaseWriter(TestCase):
         r = TestReader(
             ('Bools',([[(XL_CELL_BOOLEAN,True)]]),),
             )
-        book = tuple(r.get_workbooks())[0][0]
         w = TestWriter()
         r(w)
         self.assertEqual(w.files.keys(),['test.xls'])
