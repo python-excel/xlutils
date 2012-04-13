@@ -39,6 +39,7 @@ setup(
         },
     extras_require=dict(
            test=[
+            'manuel',
             'mock',
             'testfixtures >= 1.6.1',
             'errorhandler',
