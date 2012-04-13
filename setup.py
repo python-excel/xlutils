@@ -5,10 +5,7 @@
 # See license.txt for more details.
 
 import os
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 package_dir = os.path.join(os.path.dirname(__file__),'xlutils')
 
