@@ -534,7 +534,7 @@ class GlobReader(BaseReader):
         self.spec = spec
         
     def get_filepaths(self):
-        return glob(self.spec)
+        return sorted(glob(self.spec))
 
 class XLRDReader(BaseReader):
 

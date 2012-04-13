@@ -120,7 +120,7 @@ Available Readers
 
   >>> from xlutils.filter import GlobReader
   >>> r = GlobReader(os.path.join(test_files,'*.xls'))
-  >>> [p[len(test_files)+1:] for p in r.get_filepaths()]
+  >>> sorted([p[len(test_files)+1:] for p in r.get_filepaths()])
   ['ragged.xls', 'test.xls', 'testall.xls', 'testnoformatting.xls']
 
   All the other functionality is provided by BaseReader:
@@ -528,7 +528,7 @@ Available Filters
 
   So, the output directory contains testall.xls, but no test.xls:
 
-  >>> os.listdir(temp_dir)
+  >>> sorted(os.listdir(temp_dir))
   ['ragged.xls', 'testall.xls', 'testnoformatting.xls']
 
   Echo
