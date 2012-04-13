@@ -3,6 +3,21 @@ Changes
 
 .. currentmodule:: xlutils
 
+1.5.2 (13 April 2012)
+---------------------
+
+- When using xlutils.copy, the datemode is now copied across from the
+  source solving date problems with certain files.
+
+- The errorhandler package is no longer a hard dependency.
+
+- As a minimum, xlrd 0.7.2 and xlwt 0.7.4 are now required.
+
+1.5.1 (5 March 2012)
+--------------------
+
+- Fix packaging problem caused by the move to git
+
 1.5.0 (5 March 2012)
 --------------------
 
