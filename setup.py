@@ -32,9 +32,8 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-    'xlrd >= 0.7.3',
-    'xlwt >= 0.7.3',
-    'errorhandler',
+    'xlrd >= 0.7.2',
+    'xlwt >= 0.7.4',
     ],
     entry_points = {
         'console_scripts': [
@@ -45,6 +44,7 @@ setup(
            test=[
             'mock',
             'testfixtures >= 1.6.1',
+            'errorhandler',
             ],
            )
     )
