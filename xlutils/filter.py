@@ -264,6 +264,7 @@ class BaseWriter:
         self.close()        
         self.rdbook = rdbook
         self.wtbook = xlwt.Workbook(style_compression=2)
+        self.wtbook.dates_1904 = rdbook.datemode
         self.wtname = wtbook_name
         self.style_list = []
         self.wtsheet_names = set()

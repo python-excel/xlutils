@@ -861,7 +861,10 @@ class TestBaseWriter(TestCase):
                 aa = getattr(a,name)
                 self.assertEqual(aa,ea,'%s: %r(actual)!=%r(expected)'%(name,aa,ea))
 
-        assertEqual(e,a,overrides,'book','nsheets')
+        assertEqual(e, a, overrides, 'book',
+                    'nsheets',
+                    'datemode')
+        
         for sheet_x in range(a.nsheets):
             ash = a.sheet_by_index(sheet_x)
             es = e.sheet_by_index(sheet_x)
@@ -1051,6 +1054,27 @@ class TestBaseWriter(TestCase):
         self.assertEqual(w.files.keys(),['testall.xls'])
         self.failUnless('testall.xls' in w.closed)
         self.check_file(w,test_xls_path)
+
+    def test_dates(self):
+        # create test reader
+        xls_path = os.path.join(test_files, 'date.xls')
+        r = GlobReader(xls_path)
+        # source book must be in weird date mode
+        book = tuple(r.get_workbooks())[0][0]
+        self.assertEqual(book.datemode, 1)
+        # send straight to writer
+        w = TestWriter()
+        r(w)
+        self.check_file(w, xls_path,
+                        # date.xls is fewer sheets and styles than the default
+                        l_a_xf_list=19,
+                        l_e_xf_list=65,
+                        l_e_format_map=74,
+                        l_a_font_list=7,
+                        l_e_font_list=25,
+                        # dates.xls had a standardwidth record but xlwt can't
+                        # currently write these :-/
+                        sheet=dict(standardwidth=None),)
 
     def test_single_workbook_no_formatting(self):
         # create test reader
