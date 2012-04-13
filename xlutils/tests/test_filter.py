@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 # Copyright (c) 2008-2012 Simplistix Ltd
 #
 # This Software is released under the MIT License:
@@ -7,7 +9,7 @@
 from mock import Mock
 from StringIO import StringIO
 from tempfile import TemporaryFile
-from testfixtures import compare,Comparison as C,should_raise,replace,log_capture,tempdir
+from testfixtures import compare, Comparison as C, replace, log_capture, ShouldRaise, tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlrd import open_workbook,XL_CELL_NUMBER,XL_CELL_ERROR,XL_CELL_TEXT,XL_CELL_BOOLEAN
 from xlrd.formatting import XF
@@ -46,7 +48,8 @@ class TestBaseReader(TestCase):
     def test_no_implementation(self):
         r = BaseReader()
         f = Mock()
-        should_raise(r,NotImplementedError())(f)
+        with ShouldRaise(NotImplementedError()):
+            r(f)
         self.assertEqual(f.method_calls,[('start',(),{})])
         
     def test_ragged_rows(self):
@@ -357,9 +360,8 @@ class TestMethodFilter(TestCase):
             ])
 
     def test_invalid(self):
-        s = should_raise(OurMethodFilter)
-        f = s(self.called,['foo'])
-        compare(s.raised,C(ValueError("'foo' is not a valid method name")))
+        with ShouldRaise(ValueError("'foo' is not a valid method name")):
+            OurMethodFilter(self.called,['foo'])
         
     
 from xlutils.filter import Echo
@@ -1160,9 +1162,10 @@ class TestBaseWriter(TestCase):
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
-        should_raise(r,ValueError(
+        with ShouldRaise(ValueError(
             "A sheet named 'sheet' has already been added!"
-            ))(TestWriter())
+            )):
+            r(TestWriter())
     
     def test_empty_sheet_name(self):
         r = TestReader(
@@ -1170,9 +1173,10 @@ class TestBaseWriter(TestCase):
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
-        should_raise(r,ValueError(
+        with ShouldRaise(ValueError(
             'Empty sheet name will result in invalid Excel file!'
-            ))(TestWriter())
+            )):
+            r(TestWriter())
     
     def test_max_length_sheet_name(self):
         name = 'X'*31
@@ -1247,10 +1251,11 @@ class TestBaseWriter(TestCase):
             )
         book = tuple(r.get_workbooks())[0][0]
         # fire methods on writer
-        should_raise(r,ValueError(
+        with ShouldRaise(ValueError(
             'Sheet name cannot be more than 31 characters long, '
             'supplied name was 32 characters long!'
-            ))(TestWriter())
+            )):
+            r(TestWriter())
 
     def test_copy_error_cells(self):
         r = TestReader(
@@ -1467,7 +1472,8 @@ class TestTestReader(TestCase):
         # NB: when formattng is turned on, an XF will be created at index zero:
         compare(C(XF),book.xf_list[0])
         # ...but no others:
-        should_raise(book.xf_list,IndexError)[42]
+        with ShouldRaise(IndexError):
+            book.xf_list[42]
         # so you'll need to manually create them if you need them.
         # See fixtures.py for examples.
 
