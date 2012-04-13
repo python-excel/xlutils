@@ -119,9 +119,9 @@ Available Readers
   specification it's created with. Here's an example:
 
   >>> from xlutils.filter import GlobReader
-  >>> r = GlobReader(os.path.join(test_files,'*.xls'))
+  >>> r = GlobReader(os.path.join(test_files,'test*.xls'))
   >>> sorted([p[len(test_files)+1:] for p in r.get_filepaths()])
-  ['ragged.xls', 'test.xls', 'testall.xls', 'testnoformatting.xls']
+  ['test.xls', 'testall.xls', 'testnoformatting.xls']
 
   All the other functionality is provided by BaseReader:
 
@@ -519,7 +519,7 @@ Available Filters
   but errors are only logged while processing test.xls:
 
   >>> process(
-  ...     GlobReader(os.path.join(test_files,'*.xls')),
+  ...     GlobReader(os.path.join(test_files,'test*.xls')),
   ...     BatchByWorkbook(),
   ...     Log(logging.ERROR),
   ...     ErrorFilter(),
@@ -529,7 +529,7 @@ Available Filters
   So, the output directory contains testall.xls, but no test.xls:
 
   >>> sorted(os.listdir(temp_dir))
-  ['ragged.xls', 'testall.xls', 'testnoformatting.xls']
+  ['testall.xls', 'testnoformatting.xls']
 
   Echo
   ----
