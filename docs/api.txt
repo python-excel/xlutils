@@ -49,6 +49,11 @@ API Reference
   >>> cell_display(Cell(xlrd.XL_CELL_DATE, 36892.0))
   'date (2001-01-01 00:00:00)'
 
+  .. some setup
+
+    >>> from xlrd import open_workbook
+    >>> from os.path import join
+
   Erroneous date values will be displayed like this:
 
   >>> cell_display(Cell(xlrd.XL_CELL_DATE, 1.5))
