@@ -521,8 +521,8 @@ class BaseWriter:
             wtrow.set_cell_error(wtcolx, cell.value, style)
         else:
             raise Exception(
-                "Unknown xlrd cell type %r with value %r at (shx=%r,rowx=%r,colx=%r)" \
-                % (cty, value, sheetx, rowx, colx)
+                "Unknown xlrd cell type %r with value %r at (sheet=%r,rowx=%r,colx=%r)" \
+                % (cty, cell.value, self.rdsheet.name, rdrowx, rdcolx)
                 )
 
     def finish(self):
