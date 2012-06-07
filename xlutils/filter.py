@@ -18,6 +18,7 @@ from xlwt.Style import default_style
 logger = logging.getLogger('xlutils.filter')
 
 class BaseReader:
+    "A base reader good for subclassing."
 
     def get_filepaths(self):
         """
@@ -29,10 +30,10 @@ class BaseReader:
     def get_workbooks(self):
         """
         If the data to be processed is not stored in files or if
-        special parameters need to be passed to xlrd.open_workbook
+        special parameters need to be passed to :func:`xlrd.open_workbook`
         then this method must be overriden.
         Any implementation must return an iterable sequence of tuples.
-        The first element of which must be an xlrd.Book object and the
+        The first element of which must be an :class:`xlrd.Book` object and the
         second must be the filename of the file from which the book
         object came.
         """
@@ -47,13 +48,14 @@ class BaseReader:
                 os.path.split(path)[1]
                 )
 
-    def __call__(self,filter):
+    def __call__(self, filter):
         """
         Once instantiated, a reader will be called and have the first
-        filter in the chain passed. The implementation of this method
+        filter in the chain passed to its :meth:`__call__` method.
+        The implementation of this method
         should call the appropriate methods on the filter based on the
-        cells found in the Book objects returned from the
-        get_workbooks method.
+        cells found in the :class:`~xlrd.Book` objects returned from the
+        :meth:`get_workbooks` method.
         """
         filter.start()
         for workbook,filename in self.get_workbooks():
@@ -73,9 +75,9 @@ class BaseFilterInterface:
     """
     This is the filter interface that shows the correct way to call the 
     next filter in the chain. 
-    The 'next' attribute is set up by the process method.
+    The `next` attribute is set up by the :func:`process` function.
     It can make a good base class for a new filter, but subclassing
-    BaseFilter below is often a better idea!
+    :class:`BaseFilter` is often a better idea!
     """
 
     def start(self):
@@ -90,47 +92,47 @@ class BaseFilterInterface:
 
         This method can be called at any time. One common use is to
         reset all the filters in a chain in the event of an error
-        during the processing of an rdbook.
+        during the processing of a `rdbook`.
 
         Implementations of this method should be extremely robust and
-        must ensure that they call the reset method of the next filter
+        must ensure that they call the :meth:`start` method of the next filter
         in the chain regardless of any work they do.
         """
         self.next.start()
         
     def workbook(self,rdbook,wtbook_name):
         """
-        The workbook method is called every time processing of a new
+        This method is called every time processing of a new
         workbook starts.
 
-        rdbook - the xlrd.Book object from which the new workbook
+        :param rdbook: the :class:`~xlrd.Book` object from which the new workbook
                  should be created.
 
-        wtbook_name - the name of the workbook into which content
+        :param wtbook_name: the name of the workbook into which content
                       should be written.
         """
         self.next.workbook(rdbook,wtbook_name)
    
     def sheet(self,rdsheet,wtsheet_name):
         """
-        The sheet method is called every time processing of a new
+        This method is called every time processing of a new
         sheet in the current workbook starts.
 
-        rdsheet - the xlrd.sheet.Sheet object from which the new
+        :param rdsheet: the :class:`~xlrd.sheet.Sheet` object from which the new
                   sheet should be created.
 
-        wtsheet_name - the name of the sheet into which content
+        :param wtsheet_name: the name of the sheet into which content
                        should be written.
         """
         self.next.sheet(rdsheet,wtsheet_name)
        
     def set_rdsheet(self,rdsheet):
         """
-        The set_rdsheet method is only ever called by a filter that
+        This is only ever called by a filter that
         wishes to change the source of cells mid-way through writing a
         sheet.
 
-        rdsheet - the xlrd.sheet.Sheet object from which cells from
+        :param rdsheet: the :class:`~xlrd.sheet.Sheet` object from which cells from
                   this point forward should be read from.
 
         """
@@ -138,16 +140,16 @@ class BaseFilterInterface:
        
     def row(self,rdrowx,wtrowx):
         """
-        The row method is called every time processing of a new
+        This is called every time processing of a new
         row in the current sheet starts.
         It is primarily for copying row-based formatting from the
         source row to the target row.
 
-        rdrowx - the index of the row in the current sheet from which
+        :param rdrowx: the index of the row in the current sheet from which
                  information for the row to be written should be
                  copied.
 
-        wtrowx - the index of the row in sheet to be written to which
+        :param wtrowx: the index of the row in sheet to be written to which
                  information should be written for the row being read.
         """
         self.next.row(rdrowx,wtrowx)
@@ -158,17 +160,10 @@ class BaseFilterInterface:
         This is the most common method in which filtering and queuing
         of onward calls to the next filter takes place.
 
-        rdrowx - the index of the row to be read from in the current
-                 sheet. 
-
-        rdcolx - the index of the column to be read from in the current
-                 sheet. 
-
-        wtrowx - the index of the row to be written to in the current
-                 output sheet. 
-
-        wtcolx - the index of the column to be written to in the current
-                 output sheet. 
+        :param rdrowx: the index of the row to be read from in the current sheet. 
+        :param rdcolx: the index of the column to be read from in the current sheet. 
+        :param wtrowx: the index of the row to be written to in the current output sheet. 
+        :param wtcolx: the index of the column to be written to in the current output sheet. 
         """
         self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
 
@@ -186,6 +181,12 @@ class BaseFilterInterface:
         self.next.finish()
 
 class BaseFilter:
+    """
+    A concrete filter that implements pass-through behaviour
+    for :class:`~xlutils.filter.BaseFilterInterface`.
+
+    This often makes a great base class for your own filters.
+    """
 
     all_methods = (
         'start',
@@ -218,19 +219,22 @@ class BaseWriter:
     the specified sources.
     It is designed for sequential use so when, for example, writing
     two workbooks, the calls must be ordered as follows:
-    - workbook call for first workbook
-    - sheet call for first sheet
-    - row call for first row
-    - cell call for left-most cell of first row
-    - cell call for second-left-most cell of first row
-    ...
-    - row call for second row
-    ...
-    - sheet call for second sheet
-    ...
-    - workbook call for second workbook
-    ...
-    - finish call
+    
+    - :meth:`workbook` call for first workbook
+    - :meth:`sheet` call for first sheet
+    - :meth:`row` call for first row
+    - :meth:`cell` call for left-most cell of first row
+    - :meth:`cell` call for second-left-most cell of first row
+    - ...
+    - :meth:`row` call for second row
+    - ...
+    - :meth:`sheet` call for second sheet
+    - ...
+    - :meth:`workbook` call for second workbook
+    - ...
+    - :meth:`finish` call
+
+    Usually, only the :meth:`get_stream` method needs to be implemented in subclasses.
     """
     
     wtbook = None
@@ -240,12 +244,19 @@ class BaseWriter:
     def get_stream(self,filename):
         """
         This method is called once for each file written.
-        The filename is passed and something with 'write' and 'close'
-        methods that behave like a file object's must be returned.
+        The filename of the file to be created is passed and something with
+        :meth:`~file.write` and :meth:`~file.close`
+        methods that behave like a :class:`file` object's must be returned.
         """
         raise NotImplementedError
 
     def start(self):
+        """
+        This method should be called before processing of a batch of input.
+        This allows the filter to initialise any required data
+        structures and dispose of any existing state from previous
+        batches. 
+        """
         self.wtbook = None
         
     def close(self):
@@ -261,6 +272,16 @@ class BaseWriter:
             del self.style_list
 
     def workbook(self,rdbook,wtbook_name):
+        """
+        This method should be called every time processing of a new
+        workbook starts.
+
+        :param rdbook: the :class:`~xlrd.Book` object from which the new workbook
+                 will be created.
+
+        :param wtbook_name: the name of the workbook into which content
+                      will be written.
+        """
         self.close()        
         self.rdbook = rdbook
         self.wtbook = xlwt.Workbook(style_compression=2)
@@ -349,6 +370,16 @@ class BaseWriter:
             self.style_list.append(wtxf)
    
     def sheet(self,rdsheet,wtsheet_name):
+        """
+        This method should be called every time processing of a new
+        sheet in the current workbook starts.
+
+        :param rdsheet: the :class:`~xlrd.sheet.Sheet` object from which the new
+                  sheet will be created.
+
+        :param wtsheet_name: the name of the sheet into which content
+                       will be written.
+        """
         
         # these checks should really be done by xlwt!
         if not wtsheet_name:
@@ -447,9 +478,29 @@ class BaseWriter:
             wtsheet.vert_split_first_visible = rdsheet.vert_split_first_visible
             
     def set_rdsheet(self,rdsheet):
+        """
+        This should only ever called by a filter that
+        wishes to change the source of cells mid-way through writing a
+        sheet.
+
+        :param rdsheet: the :class:`~xlrd.sheet.Sheet` object from which cells from
+                  this point forward will be read.
+
+        """
         self.rdsheet = rdsheet
         
     def row(self,rdrowx,wtrowx):
+        """
+        This should be called every time processing of a new
+        row in the current sheet starts.
+
+        :param rdrowx: the index of the row in the current sheet from which
+                 information for the row to be written will be
+                 copied.
+
+        :param wtrowx: the index of the row in sheet to be written to which
+                 information will be written for the row being read.
+        """
         wtrow = self.wtsheet.row(wtrowx)
         # empty rows may not have a rowinfo record
         rdrow = self.rdsheet.rowinfo_map.get(rdrowx)
@@ -466,6 +517,14 @@ class BaseWriter:
                 wtrow.set_style(self.style_list[rdrow.xf_index])
 
     def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
+        """
+        This should be called for every cell in the sheet being processed.
+
+        :param rdrowx: the index of the row to be read from in the current sheet. 
+        :param rdcolx: the index of the column to be read from in the current sheet. 
+        :param wtrowx: the index of the row to be written to in the current output sheet. 
+        :param wtcolx: the index of the column to be written to in the current output sheet. 
+        """
         cell = self.rdsheet.cell(rdrowx,rdcolx)
         # setup column attributes if not already set
         if wtcolx not in self.wtcols and rdcolx in self.rdsheet.colinfo_map:
@@ -521,15 +580,20 @@ class BaseWriter:
             wtrow.set_cell_error(wtcolx, cell.value, style)
         else:
             raise Exception(
-                "Unknown xlrd cell type %r with value %r at (shx=%r,rowx=%r,colx=%r)" \
-                % (cty, value, sheetx, rowx, colx)
+                "Unknown xlrd cell type %r with value %r at (sheet=%r,rowx=%r,colx=%r)" \
+                % (cty, cell.value, self.rdsheet.name, rdrowx, rdcolx)
                 )
 
     def finish(self):
+        """
+        This method should be called once processing of all workbooks has
+        been completed.
+        """
         self.close()
 
     
 class GlobReader(BaseReader):
+    "A reader that emits events for all files that match the glob in the spec."
 
     def __init__(self,spec):
         self.spec = spec
@@ -538,23 +602,31 @@ class GlobReader(BaseReader):
         return sorted(glob(self.spec))
 
 class XLRDReader(BaseReader):
+    "A reader that uses an in-memory :class:`xlrd.Book` object as its source of events."
 
     def __init__(self,wb,filename):
         self.wb = wb
         self.filename = filename
         
     def get_workbooks(self):
+        "Yield the workbook passed during instantiation."
         yield (self.wb,self.filename)
 
 class DirectoryWriter(BaseWriter):
+    "A writer that stores files in a filesystem directory"
 
     def __init__(self,path):
         self.dir_path = path
         
     def get_stream(self,filename):
+        """
+        Returns a stream for the file in the configured directory
+        with the specified name.
+        """
         return file(os.path.join(self.dir_path,filename),'wb')
 
 class StreamWriter(BaseWriter):
+    "A writer for writing exactly one workbook to the supplied stream"
 
     fired = False
     close_after_write = False
@@ -563,12 +635,14 @@ class StreamWriter(BaseWriter):
         self.stream = stream
         
     def get_stream(self,filename):
+        "Returns the stream passed during instantiation."
         if self.fired:
             raise Exception('Attempt to write more than one workbook')
         self.fired = True
         return self.stream
 
 class XLWTWriter(BaseWriter):
+    "A writer that writes to a sequence of in-memory :class:`xlwt.Workbook` objects."
 
     def __init__(self):
         self.output = []
@@ -584,6 +658,8 @@ class MethodFilter(BaseFilter):
     that want to do a common task such as logging, printing or memory
     usage recording on certain calls configured at filter instantiation
     time.
+
+    :ref:`echo` is an example of this.
     """
     
     def method(self,name,*args):
@@ -608,6 +684,12 @@ class MethodFilter(BaseFilter):
         getattr(self.next,name)(*args)
 
 class Echo(MethodFilter):
+    """
+    This filter will print calls to the methods configured when the
+    filter is created along with the arguments passed.
+
+    For more details, see the :ref:`documentation <echo>`.
+    """
 
     def __init__(self,name=None,methods=True):
         MethodFilter.__init__(self,methods)
@@ -625,6 +707,10 @@ except ImportError:
     guppy = False
     
 class MemoryLogger(MethodFilter):
+    """
+    This filter will dump stats to the path it was configured with using
+    the heapy package if it is available.
+    """
 
     def __init__(self,path,methods=True):
         MethodFilter.__init__(self,methods)
@@ -641,7 +727,12 @@ class MemoryLogger(MethodFilter):
             
             
 class ErrorFilter(BaseReader,BaseWriter):
+    """
+    A filter that gates downstream writers or filters on whether
+    or not any errors have occurred.
 
+    See :ref:`error-filters` for details.
+    """
     temp_path = None
     
     def __init__(self,level=logging.ERROR,message='No output as errors have occurred.'):
@@ -710,6 +801,10 @@ class ErrorFilter(BaseReader,BaseWriter):
         BaseWriter.cell(self,rdrowx,rdcolx,wtrowx,wtcolx)
 
     def finish(self):
+        """
+        The method that triggers downstream filters and writers
+        if no errors have occurred.
+        """
         BaseWriter.finish(self)
         if self.handler.fired:
             logger.error(self.message)
@@ -735,6 +830,12 @@ class Range(object):
             )
 
 class ColumnTrimmer(BaseFilter):
+    """
+    This filter will strip columns containing no useful data from the
+    end of sheets.
+
+    See the :ref:`column_trimmer` documentation for an example.
+    """
 
     def __init__(self,is_junk=None):
         self.is_junk = is_junk
@@ -821,7 +922,18 @@ class ColumnTrimmer(BaseFilter):
         del self.rdbook
         self.next.finish()
         
-def process(reader,*chain):
+def process(reader, *chain):
+    """
+    The driver function for the :mod:`xlutils.filter` module.
+
+    It takes a chain of one :ref:`reader <reader>`, followed by zero or more
+    :ref:`filters <filter>` and ending with one :ref:`writer <writer>`.
+
+    All the components are chained together by the :func:`process` function
+    setting their ``next`` attributes appropriately. The
+    :ref:`reader <reader>` is then called with the first
+    :ref:`filter <filter>` in the chain.
+    """
     for i in range(len(chain)-1):
         chain[i].next = chain[i+1]
     reader(chain[0])

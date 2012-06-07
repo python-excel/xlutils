@@ -4,10 +4,18 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
-import os,unittest
+from doctest import REPORT_NDIFF, ELLIPSIS
 from fixtures import test_files
+from glob import glob
+from manuel import doctest
+from manuel.testing import TestSuite
 from testfixtures import LogCapture,TempDirectory
-from doctest import DocFileSuite, REPORT_NDIFF, ELLIPSIS
+from os.path import dirname, join, pardir
+
+import os
+
+workspace = os.environ.get('WORKSPACE', join(dirname(__file__), pardir, pardir))
+tests = glob(join(workspace, 'docs', '*.txt'))
 
 options = REPORT_NDIFF|ELLIPSIS
 
@@ -21,12 +29,7 @@ def tearDown(test):
     LogCapture.uninstall_all()
 
 def test_suite():
-    return unittest.TestSuite((
-        DocFileSuite('../readme.txt', optionflags=options),
-        DocFileSuite('../docs/copy.txt',optionflags=options,setUp=setUp,tearDown=tearDown),
-        DocFileSuite('../docs/margins.txt',optionflags=options),
-        DocFileSuite('../docs/filter.txt',optionflags=options,setUp=setUp,tearDown=tearDown),
-        DocFileSuite('../docs/display.txt',optionflags=options),
-        DocFileSuite('../docs/styles.txt',optionflags=options,setUp=setUp,tearDown=tearDown),
-        DocFileSuite('../docs/save.txt',optionflags=options,setUp=setUp,tearDown=tearDown),
-        ))
+    m =  doctest.Manuel(optionflags=REPORT_NDIFF|ELLIPSIS)
+    return TestSuite(m, *tests,
+                     setUp=setUp,
+                     tearDown=tearDown)

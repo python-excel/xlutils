@@ -1,25 +1,108 @@
-==========
-margins
-==========
+API Reference
+=============
 
-This combined module and script provide information on how much space
-is taken up in an Excel file by cells containing no meaningful data.
+.. automodule:: xlutils.copy
+   :members:
+   :undoc-members:
 
-The following example shows how it is used as a script::
+.. autofunction:: xlutils.display.quoted_sheet_name
 
-  python -m xlutils.margins [options] *.xls
+  This returns a string version of the supplied sheet name that is
+  safe to display, including encoding the unicode sheet name into a
+  string:
 
-To get a list of the available options, do the following:
+  >>> from xlutils.display import quoted_sheet_name
+  >>> quoted_sheet_name(u'Price(\xa3)','utf-8')
+  'Price(\xc2\xa3)'
 
-  python -m xlutils.margins --help
+  It also quotes the sheet name if it contains spaces:
+  
+  >>> quoted_sheet_name(u'My Sheet')
+  "'My Sheet'"
 
-The module also provides the tools that do the work for the above
-script as helpful functions:
+  Single quotes are replaced with double quotes:
 
-*ispunc(character)*
+  >>> quoted_sheet_name(u"John's Sheet")
+  "'John''s Sheet'"
 
-  This little helper function returns True if called with a punctuation
-  character and False with any other:
+.. autofunction:: xlutils.display.cell_display
+
+  This returns a string representation of the supplied cell, no matter
+  what type of cell it is. Here's some example output:
+
+  >>> import xlrd
+  >>> from xlrd.sheet import Cell
+  >>> from xlutils.display import cell_display
+  
+  >>> cell_display(Cell(xlrd.XL_CELL_EMPTY, ''))
+  'undefined'
+
+  >>> cell_display(Cell(xlrd.XL_CELL_BLANK, ''))
+  'blank'
+
+  >>> cell_display(Cell(xlrd.XL_CELL_NUMBER, 1.2))
+  'number (1.2000)'
+
+  >>> cell_display(Cell(xlrd.XL_CELL_BOOLEAN, 0))
+  'logical (FALSE)'
+
+  >>> cell_display(Cell(xlrd.XL_CELL_DATE, 36892.0))
+  'date (2001-01-01 00:00:00)'
+
+  Erroneous date values will be displayed like this:
+
+  >>> cell_display(Cell(xlrd.XL_CELL_DATE, 1.5))
+  'date? (1.500000)'
+
+  .. note:: 
+
+      To display dates correctly, make sure that `datemode` is passed
+      and is taken from the `datemode` attribute of the :class:`xlrd.Book` from
+      which the cell originated as shown below:
+
+  >>> wb = open_workbook(join(test_files,'date.xls'))
+  >>> cell = wb.sheet_by_index(0).cell(0, 0)
+  >>> cell_display(cell, wb.datemode)
+  'date (2012-04-13 00:00:00)'
+
+  If non-unicode characters are to be displayed, they will be masked
+  out:
+
+  >>> cell_display(Cell(xlrd.XL_CELL_TEXT,u'Price (\xa3)'))
+  'text (Price (?))'
+
+  If you want to see these characters, specify an encoding for the
+  output string:
+
+  >>> cell_display(Cell(xlrd.XL_CELL_TEXT,u'Price (\xa3)'), encoding='utf-8')
+  'text (Price (\xc2\xa3))'
+
+  Error cells will have their textual description displayed:
+
+  >>> cell_display(Cell(xlrd.XL_CELL_ERROR, 0))
+  'error (#NULL!)'
+
+  >>> cell_display(Cell(xlrd.XL_CELL_ERROR, 2000))
+  'unknown error code (2000)'
+
+  If you manage to pass a cell with an unknown cell type, an exception
+  will be raised:
+
+  >>> cell_display(Cell(69, 0))
+  Traceback (most recent call last):
+  ...
+  Exception: Unknown Cell.ctype: 69
+
+.. automodule:: xlutils.filter
+   :members:
+   :special-members:
+
+.. module:: xlutils.margins
+
+.. function:: ispunc(character)
+
+  This little helper function returns ``True`` if called with a punctuation
+  character and ``False`` with any other:
 
   >>> from xlutils.margins import ispunc
   >>> ispunc('u')
@@ -40,16 +123,16 @@ script as helpful functions:
   >>> ispunc(',,,')
   False
 
-*cells_all_junk(cells,is_rubbish=None)*
+.. autofunction:: xlutils.margins.cells_all_junk
   
-  This function returns True if all the cells supplied are junk:
+  This function returns ``True`` if all the cells supplied are junk:
 
   >>> from xlutils.margins import cells_all_junk
   >>> from xlrd.sheet import Cell,empty_cell
   >>> cells_all_junk([empty_cell,empty_cell,empty_cell])
   True
 
-  But it returns False as soon as any of the cells supplied are not
+  But it returns ``False`` as soon as any of the cells supplied are not
   junk:
 
   >>> from xlrd import XL_CELL_NUMBER
@@ -118,7 +201,7 @@ script as helpful functions:
     >>> cells_all_junk([Cell(XL_CELL_NUMBER,1.0)],isnegative)
     False
  
-  * Date, boolean, and error fields are all not considered to be blank:
+  * Date, boolean, and error fields are all not considered to be junk:
 
     >>> from xlrd import XL_CELL_DATE, XL_CELL_BOOLEAN, XL_CELL_ERROR
     >>> cells_all_junk([Cell(XL_CELL_DATE,'')])
@@ -128,16 +211,16 @@ script as helpful functions:
     >>> cells_all_junk([Cell(XL_CELL_ERROR,'')])
     False
 
-  Be careful though as if you call cells_all_junk with an empty
+  Be careful, though, as if you call :func:`cells_all_junk` with an empty
   sequence of cells, you'll get True:
 
   >>> cells_all_junk([])
   True
 
-*number_of_good_rows(sheet, checker=None,nrows=None,ncols=None)*
+.. autofunction:: xlutils.margins.number_of_good_rows
 
   This function returns the number of rows in a sheet that contain
-  anything other than junk, as defined by the cells_all_junk
+  anything other than junk, as defined by the :func:`~xlutils.margins.cells_all_junk`
   function. 
 
   For example:
@@ -155,7 +238,7 @@ script as helpful functions:
   >>> number_of_good_rows(sheet)
   5
 
-  You can limit the area searched using the nrows and ncols
+  You can limit the area searched using the `nrows` and `ncols`
   parameters: 
 
   >>> number_of_good_rows(sheet,nrows=3)
@@ -165,17 +248,17 @@ script as helpful functions:
   >>> number_of_good_rows(sheet,ncols=3,nrows=3)
   1
 
-  You can also pass a checking function through to the cells_all_junk
+  You can also pass a checking function through to the :func:`~xlutils.margins.cells_all_junk`
   calls:
 
   >>> number_of_good_rows(sheet,checker=lambda c:c.value=='X')
   0
 
 
-*number_of_good_cols(sheet, checker=None,nrows=None,ncols=None)*
+.. autofunction:: xlutils.margins.number_of_good_cols
 
   This function returns the number of columns in a sheet that contain
-  anything other than junk, as defined by the cells_all_junk function.
+  anything other than junk, as defined by the :func:`~xlutils.margins.cells_all_junk` function.
 
   For example:
 
@@ -191,7 +274,7 @@ script as helpful functions:
   >>> number_of_good_cols(sheet)
   5
 
-  You can limit the area searched using the nrows and ncols
+  You can limit the area searched using the `nrows` and `ncols`
   parameters: 
 
   >>> number_of_good_cols(sheet,nrows=2)
@@ -201,10 +284,15 @@ script as helpful functions:
   >>> number_of_good_cols(sheet,ncols=3,nrows=3)
   1
 
-  You can also pass a checking function through to the cells_all_junk
+  You can also pass a checking function through to the :func:`~xlutils.margins.cells_all_junk`
   calls:
 
   >>> number_of_good_cols(sheet,checker=lambda c:c.value=='X')
   0
 
+.. automodule:: xlutils.save
+   :members:
 
+.. automodule:: xlutils.styles
+   :members:
+   :special-members:

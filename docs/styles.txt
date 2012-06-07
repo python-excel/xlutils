@@ -1,18 +1,19 @@
-======
-styles
-======
+xlutils.styles
+==============
+
+.. currentmodule:: xlutils.styles
 
 This module provides tools for working with formatting information
-provided by xlrd relating and expressed in the Excel file as styles.
+provided by :mod:`xlrd` relating and expressed in the Excel file as styles.
 
-To use these tools, you need to open the workbook with xlrd and make
+To use these tools, you need to open the workbook with :mod:`xlrd` and make
 sure formatting is enabled:
 
 >>> import os
 >>> from xlrd import open_workbook
->>> book = open_workbook(os.path.join(test_files,'testall.xls'),formatting_info=1)
+>>> book = open_workbook(os.path.join(test_files,'testall.xls'), formatting_info=1)
 
-Once you have a Book object, you can extract the relevent style
+Once you have a :class:`~xlrd.Book` object, you can extract the relevent style
 information from it as follows:
 
 >>> from xlutils.styles import Styles
@@ -24,11 +25,11 @@ You can now look up style information about any cell:
 >>> s[sheet.cell(0,0)]
 <xlutils.styles.NamedStyle ...>
 
-NB: This is *not* a suitable object for copying styles to a new
-    spreadsheet using xlwt. If that is your intention, you're
-    recommended to look at xlutils.save or xlutils.filter
+.. note:: This is `not` a suitable object for copying styles to a new
+    spreadsheet using :mod:`xlwt`. If that is your intention, you're
+    recommended to look at :doc:`save` or :doc:`filter`.
 
-If you open up testall.xls in Microsoft's Excel Viewer or other
+If you open up ``testall.xls`` in Microsoft's Excel Viewer or other
 suitable software, you'll see that the following information is
 correct for cell A1:
 
@@ -37,8 +38,8 @@ correct for cell A1:
 u'Style1'
 
 While that may be interesting, the actual style information is locked
-away in an XF record. Thankfully, a NamedStyle provides easy access to
-this:
+away in an ``XF`` record. Thankfully, a :class:`NamedStyle` provides
+easy access to this:
 
 >>> A1_xf = A1_style.xf
 >>> A1_xf
@@ -74,7 +75,8 @@ For completeness, here's the same information but for cell B1:
 u'Style2'
 >>> B1_font = book.font_list[B1_style.xf.font_index]
 
-In this case, thoughm the style's colour is green:
+In this case, though, the style's colour is green:
+
 >>> book.colour_map[B1_font.colour_index]
 (0, 128, 0)
 

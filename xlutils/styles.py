@@ -1,18 +1,25 @@
-# Copyright (c) 2008 Simplistix Ltd
+# Copyright (c) 2008-2012 Simplistix Ltd
 #
 # This Software is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
 class NamedStyle:
-
+    """
+    An object with ``name`` and ``xf`` attributes representing
+    a particular style in a workbook.
+    """
     def __init__(self,name,xf):
         self.name = name
         self.xf = xf
         
 class Styles:
-
-    def __init__(self,book):
+    """
+    A mapping-like object that will return a :class:`NamedStyle`
+    instance for the cell passed to the :meth:`__getitem__`
+    method.
+    """
+    def __init__(self, book):
         xfi_to_name = {}
         for name, info in book.style_name_map.items():
             built_in, xfi = info
