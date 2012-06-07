@@ -1,18 +1,22 @@
-======
-filter
-======
+xlutils.filter
+==============
+
+.. currentmodule:: xlutils.filter
 
 This framework is designed to filter and split Excel files using a
-series of modular readers, filters, and writers. These components are
+series of modular readers, filters, and writers all tied together by
+the :func:`process` function. These components are
 described below, followed by documentation for the currently available
-readers, filters and writers. Right at the bottom are examples of how
-to use the filter framework for various tasks.
+readers, filters and writers. Right at the bottom is an example that
+puts all the various pieces together.
+
+.. _reader:
 
 Readers
 =======
 
 Readers are components that get data from a source and parse it into a
-series of xlrd.Book objects before making calls to the appropriate
+series of :class:`xlrd.Book` objects before making calls to the appropriate
 methods on the first filter in the chain. 
 
 Because it is usually only the source of the data to be processed that
@@ -26,21 +30,23 @@ it is initialised with:
 >>> from xlutils.filter import BaseReader
 >>> class MyReader(BaseReader):
 ...
-...    def __init__(self,filename):
+...    def __init__(self, filename):
 ...       self.filename = filename
 ...
 ...    def get_filepaths(self):
-...       return (os.path.join(test_files,self.filename),)
+...       return (os.path.join(test_files, self.filename),)
 
 If you need to create a more unorthodox reader, such as one that reads
 its data from a network socket or that needs to pass special
-parameters to xlrd.open_workbook then read the implementation of
-xlutils.filter.BaseReader
+parameters to :func:`xlrd.open_workbook`, then read the implementation of
+:class:`BaseReader`.
+
+.. _filter:
 
 Filters
 =======
 
-Filters are the important bits of this framework. They are build up in
+Filters are the important bits of this framework. They are built up in
 chains to achieve the results required for a particular task. A filter
 must define certain methods, the full set of these is shown in the
 example below. The implementation of these methods can do whatever the
@@ -84,7 +90,9 @@ methods are called and then call the next filter in the chain:
 ...        self.next.finish()
 
 For full details of when each of these methods are called, see the
-docstrings of the xlutils.filter.BaseFilter
+AP documentation for :class:`BaseFilterInterface`.
+
+.. _writer:
 
 Writers
 =======
@@ -106,10 +114,12 @@ directory:
 >>> class MyWriter(BaseWriter):
 ...
 ...    def get_stream(self,filename):
-...       return open(os.path.join(our_temp_dir,filename),'wb')
+...       return open(os.path.join(our_temp_dir, filename), 'wb')
 
 Available Readers
 =================
+
+Several reader implementations are included that cover many common use cases: 
 
 GlobReader
 ----------
@@ -123,7 +133,7 @@ specification it's created with. Here's an example:
 >>> sorted([p[len(test_files)+1:] for p in r.get_filepaths()])
 ['test.xls', 'testall.xls', 'testnoformatting.xls']
 
-All the other functionality is provided by BaseReader:
+All the other functionality is provided by :class:`BaseReader`:
 
 >>> isinstance(r,BaseReader)
 True
@@ -131,27 +141,27 @@ True
 XLRDReader
 ----------
 
-If you want to "save" an xlrd.Book object which you've already
+If you want to "save" an :class:`xlrd.Book` object which you've already
 created in some other way:
 
 >>> from xlrd import open_workbook
->>> wb = open_workbook(os.path.join(test_files,'testall.xls'))
+>>> wb = open_workbook(os.path.join(test_files, 'testall.xls'))
 
-Then the XLRDReader is likely what you're after: 
+Then the :class:`XLRDReader` is likely what you're after: 
 
 >>> from xlutils.filter import XLRDReader
->>> r = XLRDReader(wb,'foo.xls')
+>>> r = XLRDReader(wb, 'foo.xls')
 
-NB: You must supply a filename as shown above as the original
-    filename is not stored in the xlrd.Book object
+.. note:: You must supply a filename as shown above as the original
+    filename is not stored in the :class:`xlrd.Book` object
 
-Most functionality is provided by BaseReader:
+Most functionality is provided by :class:`BaseReader`:
 
->>> isinstance(r,BaseReader)
+>>> isinstance(r, BaseReader)
 True
 
-But its get_workbooks method just returns the values it was
-instantiated with:
+However, its :meth:`~XLRDReader.get_workbooks` method just returns the
+values it was instantiated with:
 
 >>> tuple(r.get_workbooks())
 ((<xlrd.Book object at ...>, 'foo.xls'),)
@@ -160,7 +170,7 @@ True
 
 To show it working, here we send the book straight to a writer:
 
->>> from xlutils.filter import DirectoryWriter,process
+>>> from xlutils.filter import DirectoryWriter, process
 >>> os.listdir(temp_dir)
 []
 >>> process(r,DirectoryWriter(temp_dir))
@@ -172,8 +182,7 @@ TestReader
 
 This reader is specifically designed for testing filter
 implementations with known sets of cells. This example should give a
-good idea of how to use it and shows the filter created above in
-use:
+good idea of how to use it:
 
 >>> from mock import Mock
 >>> from pprint import pprint
@@ -204,6 +213,8 @@ use:
 Available Writers
 =================
 
+Several writer implementations are included that cover many common use cases: 
+
 DirectoryWriter
 ---------------
 
@@ -215,12 +226,12 @@ during creation. Here's an example:
 >>> temp_dir = TempDirectory().path
 >>> w = DirectoryWriter(temp_dir)
 
-Most of the functionality is provided by BaseWriter:
+Most of the functionality is provided by :class:`BaseWriter`:
 
->>> isinstance(w,BaseWriter)
+>>> isinstance(w, BaseWriter)
 True
 
-But the get_stream method makes sure the files end up in the
+The :meth:`~DirectoryWriter.get_stream` method makes sure the files end up in the
 directory specified:
 
 >>> os.listdir(temp_dir)
@@ -244,12 +255,12 @@ the writer for you:
 >>> tf = TemporaryFile()
 >>> w = StreamWriter(tf)
 
-Most of the functionality is provided by BaseWriter:
+Most of the functionality is provided by :class:`BaseWriter`:
 
->>> isinstance(w,BaseWriter)
+>>> isinstance(w, BaseWriter)
 True
 
-But the get_stream method makes sure the excel data is written to
+The :meth:`~StreamWriter.get_stream` method makes sure the excel data is written to
 the stream provided:
 
 >>> f = w.get_stream('test.xls')
@@ -258,15 +269,15 @@ the stream provided:
 >>> tf.read()
 'xls data'
 
-NB: Only one file may be written to a StreamWriter, further attempts
-will result in an exception being raised:
+.. note:: Only one file may be written to a :class:`StreamWriter`,
+  further attempts will result in an exception being raised:
 
 >>> w.get_stream('test2.xls')
 Traceback (most recent call last):
 ...
 Exception: Attempt to write more than one workbook
 
-StreamWriter also doesn't close any streams passed to it:
+:class:`StreamWriter` also doesn't close any streams passed to it:
 
 >>> tf = TemporaryFile()
 >>> process(TestReader(('Sheet1',[['R0C0']])),StreamWriter(tf))
@@ -278,7 +289,7 @@ XLWTWriter
 ----------
 
 If you want to change cells after the filtering process is complete
-then an XLWTWriter can be used to obtain the xlwt.Workbook
+then an :class:`XLWTWriter` can be used to obtain the :class:`xlwt.Workbook`
 objects that result: 
 
 >>> from xlutils.filter import XLWTWriter
@@ -301,13 +312,15 @@ No files or directories found.
 test.xls
 
 As with previous writers, most of the functionality is provided by
-BaseWriter:
+:class:`BaseWriter`:
 
->>> isinstance(w,BaseWriter)
+>>> isinstance(w, BaseWriter)
 True
 
 Available Filters
 =================
+
+A selection of filters are included as described below:
 
 BaseFilter
 ----------
@@ -316,13 +329,15 @@ This is a "do nothing" filter that makes a great base class for your
 own filters. All the required methods are implemented such that they
 just call the same method on the next filter in the chain.
 
+.. _column_trimmer:
+
 ColumnTrimmer
 -------------
 
 This filter will strip columns containing no useful data from the
 end of sheets. For example:
 
->>> from xlutils.filter import process,ColumnTrimmer
+>>> from xlutils.filter import process, ColumnTrimmer
 >>> r = TestReader(
 ...         ('Sheet1',(('','',''),
 ...                    ('R1C0','',''),
@@ -357,7 +372,7 @@ When sheets are trimmed, a message is also logged to aid debugging:
  
 >>> from testfixtures import LogCapture
 >>> l = LogCapture()
->>> process(r,ColumnTrimmer(),c)
+>>> process(r, ColumnTrimmer(), c)
 >>> print l
 xlutils.filter DEBUG
   Number of columns trimmed from 3 to 2 for sheet 'Sheet1'
@@ -365,7 +380,7 @@ xlutils.filter DEBUG
   Number of columns trimmed from 3 to 1 for sheet 'Sheet3'
 
 The definition of 'no useful data' can also be controlled by passing
-in a function that returns True or False for each value:
+in a function that returns ``True`` or ``False`` for each value:
 
 >>> def not_useful(cell):
 ...     if not cell.value or cell.value=='junk': return True
@@ -374,7 +389,7 @@ in a function that returns True or False for each value:
 ...         ('Sheet1',(('R1C0','','junk'),)),
 ...     )
 >>> c = Mock()
->>> process(r,ColumnTrimmer(not_useful),c)
+>>> process(r, ColumnTrimmer(not_useful), c)
 >>> pprint(c.method_calls)
 [call.start(),
  call.workbook(<xlutils.tests.fixtures.DummyBook...>, 'test.xls'),
@@ -383,19 +398,21 @@ in a function that returns True or False for each value:
  call.cell(0, 0, 0, 0),
  call.finish()]
 
+.. _error-filters:
+
 ErrorFilter
 -----------
 
 This filter caches all method calls in a file on disk and will only
-pass them on to filters further down in the chain when its finish
-method has been called *and* no error messages have been logged to
-the python logging framework.
+pass them on to filters further down in the chain when its
+:class:`~ErrorFilter.finish` method has been called *and* no
+error messages have been logged to the python logging framework.
 
-NB: To be effective, this filter must be the last in the chain
+.. note:: To be effective, this filter must be the last in the chain
     before the writer!
 
 Here's an example of how to set one up. We need to be able to see
-what messages are logged, so we use a log capture:
+what messages are logged, so we use a :class:`~testfixtures.LogCapture`:
 
 >>> h = LogCapture()
 
@@ -420,11 +437,11 @@ So, when we have errors logged, no methods other than finish are
 passed on to the next filter:
    
 >>> c = Mock()
->>> process(MyReader('test.xls'),Log(logging.ERROR),f,c)
+>>> process(MyReader('test.xls'), Log(logging.ERROR), f, c)
 >>> len(c.method_calls)
 0
 
-As well as the error message logged, we can also see the ErrorFilter
+As well as the error message logged, we can also see the :class:`ErrorFilter`
 logs an error to that that the method calls have not been passed on:
 
 >>> print h
@@ -434,11 +451,11 @@ xlutils.filter ERROR
   No output as errors have occurred.
 >>> h.clear()
 
-This error message can be controlled when the ErrorFilter is
+This error message can be controlled when the :class:`ErrorFilter` is
 instantiated:
 
 >>> f = ErrorFilter(message='wingnuts! errors have occurred!')
->>> process(MyReader('test.xls'),Log(logging.ERROR),f,c)
+>>> process(MyReader('test.xls'), Log(logging.ERROR), f, c)
 >>> print h
 theLogger ERROR
   a message
@@ -448,7 +465,7 @@ xlutils.filter ERROR
 However, when no errors are logged, all method calls are passed:
 
 >>> c = Mock()
->>> process(MyReader('test.xls'),Log(logging.WARNING),f,c)
+>>> process(MyReader('test.xls'), Log(logging.WARNING), f, c)
 >>> len(c.method_calls)
 17
 
@@ -471,8 +488,8 @@ xlutils.filter ERROR
   No output as errors have occurred.
 
 You can also configure the log level at which messages prevent the
-ErrorFilter from passing its method calls on to the next filter in
-the chain:
+:class:`ErrorFilter` from passing its method calls on to the next
+filter in the chain:
 
 >>> f = ErrorFilter(logging.WARNING)
 
@@ -515,8 +532,8 @@ Here it is at work, starting with an empty output directory:
 >>> os.listdir(temp_dir)
 []
 
-Now test.xls, testall.xls and testnoformatting.xls are processed,
-but errors are only logged while processing test.xls:
+Now ``test.xls``, ``testall.xls`` and ``testnoformatting.xls`` are processed,
+but errors are only logged while processing ``test.xls``:
 
 >>> process(
 ...     GlobReader(os.path.join(test_files,'test*.xls')),
@@ -526,10 +543,12 @@ but errors are only logged while processing test.xls:
 ...     DirectoryWriter(temp_dir)
 ... )
 
-So, the output directory contains testall.xls, but no test.xls:
+So, the output directory contains ``testall.xls``, but no ``test.xls``:
 
 >>> sorted(os.listdir(temp_dir))
 ['testall.xls', 'testnoformatting.xls']
+
+.. _echo:
 
 Echo
 ----
@@ -537,18 +556,18 @@ Echo
 This filter will print calls to the methods configured when the
 filter is created along with the arguments passed.
 
->>> from xlutils.filter import Echo,process
+>>> from xlutils.filter import Echo, process
 >>> r = TestReader(
 ...         ('Sheet1',(('R0C0','R0C1'),
 ...                    ('R1C0','R1C1'))),
 ...     )
->>> process(r,Echo(methods=('workbook',)),Mock())
+>>> process(r, Echo(methods=('workbook',)), Mock())
 workbook:(<...DummyBook...>, 'test.xls')
 
-If 'True' is passed instead of a list of method names, then all
+If ``True`` is passed instead of a list of method names, then all
 methods called will be printed:
 
->>> process(r,Echo(methods=True),Mock())
+>>> process(r, Echo(methods=True), Mock())
 start:()
 workbook:(<...DummyBook...>, 'test.xls')
 sheet:(<xlrd.sheet.Sheet...>, 'Sheet1')
@@ -561,9 +580,9 @@ cell:(1, 1, 1, 1)
 finish:()
 
 If you need to see what's happening at various points in a chain,
-you can also give an Echo a name:
+you can also give an :class:`Echo` a name:
 
->>> process(r,Echo('first'),Echo('second'),Mock())
+>>> process(r,Echo('first'), Echo('second'), Mock())
 'first' start:()
 'second' start:()
 'first' workbook:(<...DummyBook...>, 'test.xls')
@@ -593,20 +612,21 @@ This filter will dump stats to the path it was configured with using
 the heapy package if it is available. If it is not available, no
 operations are performed.
 
-For example, with a MemoryLogger configured as follows:
+For example, with a :class:`MemoryLogger` configured as follows:
 
 >>> from xlutils.filter import MemoryLogger
->>> m = MemoryLogger('/some/path',methods=('sheet','cell'))
+>>> m = MemoryLogger('/some/path', methods=('sheet','cell'))
 
 The equivalent of the following call::
 
   from guppy import hpy; hpy().heap().stat.dump('/some/path')
 
-will be performed whenever the MemoryLogger's sheet and cell methods
-are called.
+will be performed whenever the :class:`MemoryLogger`'s
+:meth:`~MemoryLogger.sheet` and :meth:`~MemoryLogger.cell` methods are
+called.
 
-A MemoryLogger configured as followed will log memory usage whenever
-any of the MemoryLogger's methods are called:
+A :class:`MemoryLogger` configured as followed will log memory usage
+whenever any of the :class:`MemoryLogger`'s methods are called:
 
 >>> m = MemoryLogger('/some/path',True)
 
@@ -617,9 +637,9 @@ http://guppy-pe.sourceforge.net/#Heapy
 Example Usage
 =============
 
-Here's an example that makes use of all the example components
-above to filter out odd numbered rows from an original workbook's
-sheets. To do this we need one more filter:
+Here's an example that makes use of all the types of components
+described above to filter out odd numbered rows from an original
+workbook's sheets. To do this we need one more filter:
 
 >>> from xlutils.filter import BaseFilter
 >>> class EvenFilter(BaseFilter):
@@ -632,7 +652,8 @@ sheets. To do this we need one more filter:
 ...         if not rdrowx%2:
 ...             self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
 
-Now we can put it all together with a call to the process function:
+Now we can put it all together with a call to the :func:`process`
+function:
 
 >>> from xlutils.filter import process
 >>> process(

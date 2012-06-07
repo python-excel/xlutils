@@ -1,8 +1,7 @@
-====
-save
-====
+xlutils.save
+============
 
-This allows serialisation of xlrd.Book objects back into binary Excel files.
+This allows serialisation of :class:`xlrd.Book` objects back into binary Excel files.
 
 Here's a simple example:
 

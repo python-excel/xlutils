@@ -9,7 +9,8 @@ extensions = [
     ]
 
 intersphinx_mapping = {
-    'http://docs.python.org': None
+    'http://docs.python.org': None,
+    'http://packages.python.org/testfixtures/': None,
     # XXX - errorhandler
     # XXX - xlrd
     # XXX - xlwt
