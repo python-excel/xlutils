@@ -164,7 +164,7 @@ However, its :meth:`~XLRDReader.get_workbooks` method just returns the
 values it was instantiated with:
 
 >>> tuple(r.get_workbooks())
-((<xlrd.Book object at ...>, 'foo.xls'),)
+((<xlrd...Book object at ...>, 'foo.xls'),)
 >>> tuple(r.get_workbooks())[0][0] is wb
 True
 
@@ -665,8 +665,8 @@ function:
 ...     )
 before start
 after start
-before workbook <xlrd.Book object at ...> test.xls
-after workbook <xlrd.Book object at ...> test.xls
+before workbook <xlrd...Book object at ...> test.xls
+after workbook <xlrd...Book object at ...> test.xls
 before sheet <xlrd.sheet.Sheet object at ...> Sheet1
 after sheet <xlrd.sheet.Sheet object at ...> Sheet1
 before row 0 0
