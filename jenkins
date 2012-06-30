@@ -1,0 +1,4 @@
+$PYTHON_EXE  bootstrap.py
+bin/buildout
+bin/docpy setup.py sdist
+bin/nosetests --with-xunit --with-cov --cov=xlutils --cov-report=xml --cov-report=html
