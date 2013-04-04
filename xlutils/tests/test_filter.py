@@ -75,7 +75,6 @@ class TestBaseReader(TestCase):
         compare(f.method_calls,[
             ('start',(),{}),
             ('workbook',(C('xlrd.Book',
-                           pickleable=0,
                            formatting_info=1,
                            on_demand=True,
                            ragged_rows=True,
@@ -421,7 +420,6 @@ class TestErrorFilter(TestCase):
         compare(m.method_calls,[
             ('start',(),{}),
             ('workbook',(C('xlrd.Book',
-                           pickleable=0,
                            formatting_info=1,
                            on_demand=False,
                            ragged_rows=True,
@@ -849,10 +847,10 @@ class TestBaseWriter(TestCase):
                 
         self.noted_indexes = {}
         # now open the source file
-        e = open_workbook(path,pickleable=0,formatting_info=1)
+        e = open_workbook(path, formatting_info=1)
         # and the target file
         f = writer.files[os.path.split(path)[1]].file
-        a = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
+        a = open_workbook(file_contents=f.read(), formatting_info=1)
         f.close()
         # and then compare
         def assertEqual(e,a,overrides,t,*names):
@@ -1166,7 +1164,7 @@ class TestBaseWriter(TestCase):
         self.failUnless('new.xls' in w.closed)
         # now check the cells written
         f = w.files['new.xls'].file
-        a = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
+        a = open_workbook(file_contents=f.read(), formatting_info=1)
         self.assertEqual(a.nsheets,1)
         sheet = a.sheet_by_index(0)
         self.assertEqual(sheet.nrows,4)
@@ -1206,7 +1204,7 @@ class TestBaseWriter(TestCase):
         r(w)
         self.assertEqual(w.files.keys(),['test.xls'])
         f = w.files['test.xls'].file
-        a = open_workbook(file_contents=f.read(),pickleable=0,formatting_info=1)
+        a = open_workbook(file_contents=f.read(), formatting_info=1)
         self.assertEqual(a.sheet_names(),[name])
         
     def test_panes(self):

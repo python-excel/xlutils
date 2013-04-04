@@ -21,7 +21,6 @@ class DummyBook(Book):
 
     biff_version = 80
     logfile = sys.stdout
-    pickleable = False
     verbosity = 0
     datemode = 0
     on_demand = False

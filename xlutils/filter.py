@@ -41,7 +41,6 @@ class BaseReader:
             yield (
                 xlrd.open_workbook(
                     path,
-                    pickleable=0,
                     formatting_info=1,
                     on_demand=True,
                     ragged_rows=True),
@@ -775,7 +774,6 @@ class ErrorFilter(BaseReader,BaseWriter):
                 # and we don't know when that might be :-(
                 xlrd.open_workbook(
                     os.path.join(self.temp_path,pathname),
-                    pickleable=0,
                     formatting_info=1,
                     on_demand=False,
                     ragged_rows=True
