@@ -17,7 +17,7 @@ setup(
     license='MIT',
     description="Utilities for working with Excel files that require both xlrd and xlwt",
     long_description=open(os.path.join(base_dir, 'docs', 'description.txt')).read(),
-    url='http://www.simplistix.co.uk/software/python/xlutils',
+    url='http://www.python-excel.org',
     keywords="excel xls xlrd xlwt",
     classifiers=[
     'Development Status :: 6 - Mature',
