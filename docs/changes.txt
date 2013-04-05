@@ -3,6 +3,18 @@ Changes
 
 .. currentmodule:: xlutils
 
+1.6.0 (5 April 2013)
+--------------------
+
+- Moved documentation to be Sphinx based.
+
+- Support for :mod:`xlrd` 0.9.1, which no longer has pickleable
+  books.
+
+  .. note:: You may encounter performance problems if you work with
+            large spreadsheets and use :mod:`xlutils` 1.6.0 with
+            :mod:`xlrd` versions earlier that 0.9.1. 
+
 1.5.2 (13 April 2012)
 ---------------------
 
