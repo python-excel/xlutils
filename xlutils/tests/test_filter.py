@@ -1236,6 +1236,39 @@ class TestBaseWriter(TestCase):
         self.assertEqual(2,sheet.horz_split_pos)
         self.assertEqual(3,sheet.vert_split_first_visible)
         self.assertEqual(4,sheet.horz_split_first_visible)
+        # for splits, this is a magic value, and is computed
+        # by xlwt.
+        self.assertEqual(0,sheet.split_active_pane)
+        
+    def test_splits(self):
+        r = TestReader()
+        r.formatting_info = True
+        
+        r.setup(('sheet',[['S1R0C0']]))
+        
+        book = tuple(r.get_workbooks())[0][0]
+        sheet = book.sheet_by_index(0)
+        sheet.panes_are_frozen = 0
+        sheet.has_pane_record = True
+        sheet.vert_split_pos = 1
+        sheet.horz_split_pos = 2
+        sheet.vert_split_first_visible = 3
+        sheet.horz_split_first_visible = 4
+        sheet.split_active_pane = 3
+        
+        w = TestWriter()
+        r(w)
+        
+        self.assertEqual(w.files.keys(),['test.xls'])
+        f = w.files['test.xls'].file
+        a = open_workbook(file_contents=f.read(),formatting_info=1)
+        sheet = a.sheet_by_index(0)
+        self.assertEqual(0,sheet.panes_are_frozen)
+        self.assertEqual(1,sheet.has_pane_record)
+        self.assertEqual(1,sheet.vert_split_pos)
+        self.assertEqual(2,sheet.horz_split_pos)
+        self.assertEqual(3,sheet.vert_split_first_visible)
+        self.assertEqual(4,sheet.horz_split_first_visible)
         self.assertEqual(3,sheet.split_active_pane)
         
     def test_zoom_factors(self):
