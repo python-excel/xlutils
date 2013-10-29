@@ -3,6 +3,11 @@ Changes
 
 .. currentmodule:: xlutils
 
+1.7.0 (29 October 2013)
+-----------------------
+
+- Added the :mod:`xlutils.view` module.
+
 1.6.0 (5 April 2013)
 --------------------
 
