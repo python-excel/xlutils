@@ -301,3 +301,8 @@ API Reference
 .. automodule:: xlutils.styles
    :members:
    :special-members:
+
+.. automodule:: xlutils.view
+   :members:
+   :special-members:
+

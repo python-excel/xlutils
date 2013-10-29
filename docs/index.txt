@@ -28,6 +28,9 @@ of them is documented below:
   Tools for working with formatting information expressed the styles
   found in Excel files.
 
+:doc:`xlutils.view <view>`
+  Easy to use views of the data contained in a workbook's sheets.
+
 .. toctree::
    :hidden:
 
@@ -37,7 +40,7 @@ of them is documented below:
    margins.txt
    save.txt
    styles.txt
-
+   view.txt
 
 Working with xlutils
 --------------------
