@@ -4,7 +4,7 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
-from datetime import datetime
+from datetime import datetime, time
 from xlrd import open_workbook, XL_CELL_DATE, xldate_as_tuple
 from xlwt.Utils import col_by_name
 
@@ -71,7 +71,12 @@ class SheetView(object):
         for colx in self.cols:
             value = self.sheet.cell_value(rowx, colx)
             if self.sheet.cell_type(rowx, colx) == XL_CELL_DATE:
-                value = datetime(*xldate_as_tuple(value, self.book.datemode))
+                date_parts = xldate_as_tuple(value, self.book.datemode)
+                # Times come out with a year of 0.
+                if date_parts[0]:
+                    value = datetime(*date_parts)
+                else:
+                    value = time(*date_parts[3:])
             yield value
             
     def __iter__(self):

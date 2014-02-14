@@ -36,10 +36,12 @@ R1C0 R1C1
 One helpful feature is that dates are converted to
 :class:`~datetime.datetime` objects rather than being left as numbers:
 
->>> for row in View(join(test_files,'date.xls'))[0]:
+>>> for row in View(join(test_files,'datetime.xls'))[0]:
 ...     for value in row:
 ...         print repr(value)
 datetime.datetime(2012, 4, 13, 0, 0)
+datetime.time(12, 54, 37)
+datetime.datetime(2014, 2, 14, 4, 56, 23)
 
 Now, things get really interesting when you start slicing the view of
 a sheet:

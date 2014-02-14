@@ -3,7 +3,7 @@
 # This Software is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
-from datetime import datetime
+from datetime import datetime, time
 from os import path
 from unittest import TestCase
 
@@ -44,12 +44,14 @@ class ViewTests(Check, TestCase):
             (u'More merged cells', '')
             )
 
-    def test_date(self):
+    def test_dates_and_times(self):
         self._check(
-            View(path.join(test_files,'date.xls'))[0],
+            View(path.join(test_files,'datetime.xls'))[0],
             (datetime(2012, 4, 13, 0, 0), ),
+            (time(12, 54, 37), ),
+            (datetime(2014, 2, 14, 4, 56, 23), ),
             )
-        
+
     def test_subclass(self):
         class MySheetView:
             def __init__(self, book, sheet):
