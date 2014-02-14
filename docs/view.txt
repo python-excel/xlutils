@@ -16,6 +16,7 @@ workbook:
 ...             print value,
 ...         print
 
+>>> from os.path import join
 >>> from xlutils.view import View
 >>> view = View(join(test_files,'testall.xls'))
 >>> print_data(view[0])
