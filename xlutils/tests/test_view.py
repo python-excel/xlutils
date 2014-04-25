@@ -51,7 +51,13 @@ class ViewTests(Check, TestCase):
             (time(12, 54, 37), ),
             (datetime(2014, 2, 14, 4, 56, 23), ),
             )
-
+        
+    def test_xlsx(self):
+        self._check(
+            View(path.join(test_files,'sample.xlsx')),
+            (),
+            )
+        
     def test_subclass(self):
         class MySheetView:
             def __init__(self, book, sheet):

@@ -104,7 +104,7 @@ class View(object):
 
     def __init__(self, path, class_=None):
         self.class_ = class_ or self.class_
-        self.book = open_workbook(path, formatting_info=1, on_demand=True)
+        self.book = open_workbook(path, formatting_info=0, on_demand=True)
 
     def __getitem__(self, item):
         """
