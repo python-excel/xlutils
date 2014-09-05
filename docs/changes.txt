@@ -3,6 +3,14 @@ Changes
 
 .. currentmodule:: xlutils
 
+1.7.1 (25 April 2014)
+---------------------
+
+- Add support for time cells in :class:`~xlutils.view.View`.
+
+- Add support for ``.xlsx`` files in :class:`~xlutils.view.View` at the
+  expense of formatting information being available.
+
 1.7.0 (29 October 2013)
 -----------------------
 
