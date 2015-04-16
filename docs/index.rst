@@ -34,13 +34,13 @@ of them is documented below:
 .. toctree::
    :hidden:
 
-   copy.txt
-   display.txt
-   filter.txt
-   margins.txt
-   save.txt
-   styles.txt
-   view.txt
+   copy.rst
+   display.rst
+   filter.rst
+   margins.rst
+   save.rst
+   styles.rst
+   view.rst
 
 Working with xlutils
 --------------------
@@ -51,11 +51,11 @@ to its development and the usual boilerplate:
 .. toctree::
    :maxdepth: 1
 
-   installation.txt
-   development.txt
-   api.txt
-   changes.txt
-   license.txt
+   installation.rst
+   development.rst
+   api.rst
+   changes.rst
+   license.rst
 
 Indices and tables
 ==================

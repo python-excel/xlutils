@@ -11,13 +11,14 @@ extensions = [
 intersphinx_mapping = {
     'http://docs.python.org': None,
     'http://packages.python.org/testfixtures/': None,
-    # XXX - errorhandler
+    'http://pythonhosted.org/errorhandler/': None,
+
     # XXX - xlrd
     # XXX - xlwt
     }
 
 # General
-source_suffix = '.txt'
+source_suffix = '.rst'
 master_doc = 'index'
 project = pkg_info.name
 copyright = '2008-%s Simplistix Ltd' % datetime.datetime.now().year
