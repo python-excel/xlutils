@@ -38,11 +38,25 @@ setup(
         ],
         },
     extras_require=dict(
-           test=[
+        test=[
+            'errorhandler',
             'manuel',
             'mock',
+            'nose',
+            'nose-fixes',
+            'nose-cov',
+            'coveralls',
             'testfixtures >= 1.6.1',
-            'errorhandler',
-            ],
-           )
+            'tox',
+        ],
+        build=[
+            'setuptools-git',
+            'wheel',
+            'twine',
+            'sphinx',
+            'pkginfo',
+        ]
+
     )
+
+)

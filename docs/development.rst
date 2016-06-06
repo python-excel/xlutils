@@ -21,20 +21,30 @@ push back to them::
 Once you have an appropriate set of local repositories, you can follow
 these instructions to perform various development tasks:
 
-Setting up the buildout
+Setting up a virtualenv
 -----------------------
 
-All development requires that you run the buildout::
+The recommended way to set up a development environment is to turn
+your checkout into a virtualenv and then install the package in
+editable form as follows::
 
-  python bootstrap.py
-  bin/buildout
+  $ virtualenv .
+  $ bin/pip install -U -e .[test,build]
+
+You will now also need to install xlrd and xlwt into the virtualenv::
+
+  $ source bin/activate
+  $ cd ../xlrd
+  $ pip install -e .
+  $ cd ../xlwt
+  $ pip install -e .
 
 Running the tests
 -----------------
 
-Once you have a buildout, the tests can be run as follows::
+Once you've set up a virtualenv, the tests can be run as follows::
 
-  bin/test
+  $ bin/nosetests
 
 Building the documentation
 --------------------------
