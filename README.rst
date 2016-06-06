@@ -72,5 +72,5 @@ Try the following in this order:
 Licensing
 =========
 
-Copyright (c) 2008-2015 Simplistix Ltd
+Copyright (c) 2008-2015 Simplistix Ltd.
 See docs/license.txt for details.
