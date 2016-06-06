@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys, os, pkginfo, datetime
+import os, pkginfo, datetime
 
 pkg_info = pkginfo.Develop(os.path.join(os.path.dirname(__file__),'..'))
 
@@ -10,11 +10,10 @@ extensions = [
 
 intersphinx_mapping = {
     'http://docs.python.org': None,
-    'http://packages.python.org/testfixtures/': None,
+    'http://testfixtures.readthedocs.io/en/latest/': None,
     'http://pythonhosted.org/errorhandler/': None,
-
-    # XXX - xlrd
-    # XXX - xlwt
+    'http://xlrd.readthedocs.io/en/latest/': None,
+    'http://xlwt.readthedocs.io/en/latest/': None,
     }
 
 # General
