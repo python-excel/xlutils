@@ -156,8 +156,18 @@ class CheckerViewTests(TestCase):
 
         
     def test_does_not_match(self):
-        with ShouldRaise(AssertionError('''\
-Sequence not as expected:
+        with ShouldRaise(AssertionError) as s:
+            CheckerView(path.join(test_files,'testall.xls'))['Sheet1'].compare(
+                (u'R0C0', u'R0C1'),
+                (u'R1C0', u'R1C1'),
+                (u'A merged cell', ''),
+                ('', ''),
+                ('', ''),
+                (u'More merged cells', 'XX')
+                )
+
+        compare(str(s.raised), expected='''\
+sequence not as expected:
 
 same:
 ((u'R0C0', u'R0C1'),
@@ -170,12 +180,15 @@ first:
 ((u'More merged cells', 'XX'),)
 
 second:
-((u'More merged cells', ''),)''')):
-            CheckerView(path.join(test_files,'testall.xls'))['Sheet1'].compare(
-                (u'R0C0', u'R0C1'),
-                (u'R1C0', u'R1C1'),
-                (u'A merged cell', ''),
-                ('', ''),
-                ('', ''),
-                (u'More merged cells', 'XX')
-                )
+((u'More merged cells', u''),)
+
+While comparing [5]: sequence not as expected:
+
+same:
+(u'More merged cells',)
+
+first:
+('XX',)
+
+second:
+(u'',)''')

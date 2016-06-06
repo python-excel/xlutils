@@ -77,7 +77,7 @@ data in the view of the sheet is not as expected:
 ... )
 Traceback (most recent call last):
 ...
-AssertionError: Sequence not as expected:
+AssertionError: sequence not as expected:
 <BLANKLINE>
 same:
 (('R0C0',),)
@@ -86,7 +86,18 @@ first:
 (('R0C1',),)
 <BLANKLINE>
 second:
-((u'R1C0',), (u'A merged cell',), ('',), ('',), (u'More merged cells',))
+((u'R1C0',), (u'A merged cell',), (u'',), (u'',), (u'More merged cells',))
+<BLANKLINE>
+While comparing [1]: sequence not as expected:
+<BLANKLINE>
+same:
+()
+<BLANKLINE>
+first:
+('R0C1',)
+<BLANKLINE>
+second:
+(u'R1C0',)
 
 Use of the :meth:`~CheckSheet.compare` method requires
 `testfixtures`__ to be installed.
