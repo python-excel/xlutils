@@ -5,7 +5,7 @@
 # See license.txt for more details.
 
 from mock import Mock
-from testfixtures import should_raise
+from testfixtures import ShouldRaise
 from unittest import TestSuite,TestCase,makeSuite
 from xlutils.styles import Styles
 
@@ -45,16 +45,16 @@ class TestStyles(TestCase):
             'A':(0,0),
             'B':(0,0),
             }
-        styles = should_raise(Styles,AssertionError)
-        styles(self.wb)
+        with ShouldRaise(AssertionError()):
+            Styles(self.wb)
         
     def test_multiple_names_for_xfi_bad_2(self):
         self.wb.style_name_map = {
             'A':(0,0),
             '':(0,0),
             }
-        styles = should_raise(Styles,AssertionError)
-        styles(self.wb)
+        with ShouldRaise(AssertionError()):
+            Styles(self.wb)
         
 def test_suite():
     return TestSuite((
