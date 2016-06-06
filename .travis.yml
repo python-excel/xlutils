@@ -1,0 +1,31 @@
+# for container-y goodness:
+sudo: false
+
+language: python
+
+python:
+  - "2.7"
+  - "2.6"
+
+# command to install dependencies
+install:
+  - pip install -Ur xlrd xlutils
+  - pip install -Ue .[test,build]
+
+# command to run tests, e.g. python setup.py test
+script: nosetests --with-cov --cov=xlutils
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: chrisw
+  password:
+    secure: ONKUAL0vkY/6LqHi7mrsMq0jVZdgdWPoM0mkFf423pOLI9i3eigsKergwGIehilZhTDvPVmPxVBeShCykVoVEKYGGUhnw1GLlyZhfDWE7wFOLUf68ujTdHo+BPMltbn9lT1/lJhgy2jS1HPRTdY773W6igJXbTDZGSrj3jicy+I=
+  on:
+    tags: true
+    repo: python-excel/xlutils
+    python: "2.7"
+  skip_cleanup: true
+  distributions: "sdist bdist_wheel"

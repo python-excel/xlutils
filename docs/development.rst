@@ -3,6 +3,11 @@ Development
 
 .. highlight:: bash
 
+This package is developed using continuous integration which can be
+found here:
+
+https://travis-ci.org/python-excel/xlutils
+
 If you wish to contribute to this project, then you should fork the
 repository found here:
 
@@ -58,26 +63,10 @@ directory containg setup.py::
 Making a release
 ----------------
 
-The first thing to do when making a release is to check that the ReST
-to be uploaded to PyPI is valid::
+To make a release, just update ``versions.txt``, update the change log, tag it
+and push to https://github.com/python-excel/xlutils
+and Travis CI should take care of the rest.
 
-  bin/docpy setup.py --long-description | bin/rst2 html \
-    --link-stylesheet \
-    --stylesheet=http://www.python.org/styles/styles.css > build/desc.html
-
-Once you're certain everything is as it should be, the following will
-build the distribution, upload it to PyPI, register the metadata with
-PyPI and upload the Sphinx documentation to PyPI::
-
-  bin/buildout -o
-  cd docs
-  make clean
-  make html
-  cd ..
-  bin/docpy setup.py sdist upload register upload_sphinx --upload-dir=docs/_build/html
-
-The ``bin/buildout`` will make sure the correct package information is
-used.
-
-This should all be done on a unix box so that a `.tgz` source
-distribution is produced.
+Once the above is done, make sure to go to
+https://readthedocs.org/projects/xlutils/versions/
+and make sure the new release is marked as an Active Version.
