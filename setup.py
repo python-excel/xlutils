@@ -11,12 +11,12 @@ package_dir = os.path.join(os.path.dirname(__file__),'xlutils')
 
 setup(
     name='xlutils',
-    version=file(os.path.join(base_dir, name, 'version.txt')).read().strip(),
+    version=open(os.path.join(base_dir, name, 'version.txt')).read().strip(),
     author='Chris Withers',
     author_email='chris@simplistix.co.uk',
     license='MIT',
     description="Utilities for working with Excel files that require both xlrd and xlwt",
-    long_description=open(os.path.join(base_dir, 'docs', 'description.rst')).read(),
+    long_description=open(os.path.join(base_dir, 'README.rst')).read(),
     url='http://www.python-excel.org',
     keywords="excel xls xlrd xlwt",
     classifiers=[
