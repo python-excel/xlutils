@@ -16,7 +16,7 @@ setup(
     author_email='chris@simplistix.co.uk',
     license='MIT',
     description="Utilities for working with Excel files that require both xlrd and xlwt",
-    long_description=open(os.path.join(base_dir, 'docs', 'description.txt')).read(),
+    long_description=open(os.path.join(base_dir, 'docs', 'description.rst')).read(),
     url='http://www.python-excel.org',
     keywords="excel xls xlrd xlwt",
     classifiers=[

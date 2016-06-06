@@ -12,10 +12,7 @@ from manuel.testing import TestSuite
 from testfixtures import LogCapture,TempDirectory
 from os.path import dirname, join, pardir
 
-import os
-
-workspace = os.environ.get('WORKSPACE', join(dirname(__file__), pardir, pardir))
-tests = glob(join(workspace, 'docs', '*.txt'))
+tests = glob(join(join(dirname(__file__), pardir, pardir), 'docs', '*.rst'))
 
 options = REPORT_NDIFF|ELLIPSIS
 
