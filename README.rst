@@ -10,7 +10,7 @@
 .. _Docs: http://xlutils.readthedocs.org/en/latest/
 
 .. |PyPI| image:: https://badge.fury.io/py/xlutils.svg
-.. _PyPI: https://badge.fury.io/py/xlutilsxlutils
+.. _PyPI: https://badge.fury.io/py/xlutils
     
 xlutils
 =======
