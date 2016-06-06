@@ -49,12 +49,6 @@ Do the following in your virtualenv::
 
   pip install xlutils
 
-For full documentation please see:
-http://www.simplistix.co.uk/software/python/xlutils
-
-If working offline, please consult the documentation source in the
-`docs` directory.
-
 Documentation
 =============
 
