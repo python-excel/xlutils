@@ -34,5 +34,6 @@ deploy:
     tags: true
     repo: python-excel/xlutils
     python: "3.5"
+    condition: $DEPS = pypi
   skip_cleanup: true
   distributions: "sdist bdist_wheel"
