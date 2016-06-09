@@ -13,32 +13,32 @@ workbook:
 >>> def print_data(rows):
 ...     for row in rows:
 ...         for value in row:
-...             print value,
-...         print
+...             print(value, end=' ')
+...         print()
 
 >>> from os.path import join
 >>> from xlutils.view import View
 >>> view = View(join(test_files,'testall.xls'))
 >>> print_data(view[0])
-R0C0 R0C1
-R1C0 R1C1
-A merged cell 
+R0C0 R0C1 
+R1C0 R1C1 
+A merged cell  
 <BLANKLINE>
 <BLANKLINE>
-More merged cells 
+More merged cells  
 
 You can also get a sheet by name:
 
 >>> print_data(view['Sheet2'])
-R0C0 R0C1
-R1C0 R1C1
+R0C0 R0C1 
+R1C0 R1C1 
 
 One helpful feature is that dates are converted to
 :class:`~datetime.datetime` objects rather than being left as numbers:
 
 >>> for row in View(join(test_files,'datetime.xls'))[0]:
 ...     for value in row:
-...         print repr(value)
+...         print(repr(value))
 datetime.datetime(2012, 4, 13, 0, 0)
 datetime.time(12, 54, 37)
 datetime.datetime(2014, 2, 14, 4, 56, 23)
@@ -47,8 +47,8 @@ Now, things get really interesting when you start slicing the view of
 a sheet:
 
 >>> print_data(view['Sheet1'][:2, :1])
-R0C0
-R1C0
+R0C0 
+R1C0 
 
 As you can see, these behave exactly as slices into lists would, with
 the first slice being on rows and the second slice being on columns.
@@ -60,8 +60,8 @@ are inclusive. For example:
 
 >>> from xlutils.view import Row, Col
 >>> print_data(view['Sheet1'][Row(1):Row(2), Col('A'):Col('B')])
-R0C0 R0C1
-R1C0 R1C1
+R0C0 R0C1 
+R1C0 R1C1 
 
 Finally, to aid with automated tests, there is a :class:`CheckerView`
 subclass of :class:`View` that provides :class:`CheckSheet` views onto
@@ -72,20 +72,20 @@ data in the view of the sheet is not as expected:
 >>> from xlutils.view import CheckerView
 >>> sheet_view = CheckerView(join(test_files,'testall.xls'))[0]
 >>> sheet_view[:, Col('A'):Col('A')].compare(
-...     ('R0C0', ),
-...     ('R0C1', ),
+...     (u'R0C0', ),
+...     (u'R0C1', ),
 ... )
 Traceback (most recent call last):
 ...
 AssertionError: sequence not as expected:
 <BLANKLINE>
 same:
-(('R0C0',),)
+((u'R0C0',),)
 <BLANKLINE>
-first:
-(('R0C1',),)
+expected:
+((u'R0C1',),)
 <BLANKLINE>
-second:
+actual:
 ((u'R1C0',), (u'A merged cell',), (u'',), (u'',), (u'More merged cells',))
 <BLANKLINE>
 While comparing [1]: sequence not as expected:
@@ -93,11 +93,13 @@ While comparing [1]: sequence not as expected:
 same:
 ()
 <BLANKLINE>
-first:
-('R0C1',)
+expected:
+(u'R0C1',)
 <BLANKLINE>
-second:
+actual:
 (u'R1C0',)
+<BLANKLINE>
+While comparing [1][0]: u'R0C1' (expected) != u'R1C0' (actual)
 
 Use of the :meth:`~CheckSheet.compare` method requires
 `testfixtures`__ to be installed.

@@ -17,8 +17,8 @@ Here's a simple example:
 
 You can also save the data to a stream that you provide:
 
->>> from StringIO import StringIO
->>> s = StringIO()
+>>> from xlutils.compat import BytesIO
+>>> s = BytesIO()
 >>> save(wb,s)
 >>> len(s.getvalue())
 5632

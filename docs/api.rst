@@ -13,17 +13,17 @@ API Reference
 
   >>> from xlutils.display import quoted_sheet_name
   >>> quoted_sheet_name(u'Price(\xa3)','utf-8')
-  'Price(\xc2\xa3)'
+  b'Price(\xc2\xa3)'
 
   It also quotes the sheet name if it contains spaces:
   
   >>> quoted_sheet_name(u'My Sheet')
-  "'My Sheet'"
+  b"'My Sheet'"
 
   Single quotes are replaced with double quotes:
 
   >>> quoted_sheet_name(u"John's Sheet")
-  "'John''s Sheet'"
+  b"'John''s Sheet'"
 
 .. autofunction:: xlutils.display.cell_display
 
@@ -33,6 +33,7 @@ API Reference
   >>> import xlrd
   >>> from xlrd.sheet import Cell
   >>> from xlutils.display import cell_display
+  >>> from xlutils.compat import PY3
   
   >>> cell_display(Cell(xlrd.XL_CELL_EMPTY, ''))
   'undefined'
@@ -73,14 +74,23 @@ API Reference
   If non-unicode characters are to be displayed, they will be masked
   out:
 
-  >>> cell_display(Cell(xlrd.XL_CELL_TEXT,u'Price (\xa3)'))
-  'text (Price (?))'
+  >>> cd = cell_display(Cell(xlrd.XL_CELL_TEXT,u'Price (\xa3)'))
+  >>> if PY3:
+  ...     str(cd) == "text (b'Price (?)')"
+  ... else:
+  ...     str(cd) == 'text (Price (?))'
+  True
+
 
   If you want to see these characters, specify an encoding for the
   output string:
 
-  >>> cell_display(Cell(xlrd.XL_CELL_TEXT,u'Price (\xa3)'), encoding='utf-8')
-  'text (Price (\xc2\xa3))'
+  >>> cd = cell_display(Cell(xlrd.XL_CELL_TEXT,u'Price (\xa3)'), encoding='utf-8')
+  >>> if PY3:
+  ...     str(cd) == "text (b'Price (\\xc2\\xa3)')"
+  ... else:
+  ...     str(cd) == 'text (Price (\xc2\xa3))'
+  True
 
   Error cells will have their textual description displayed:
 

@@ -11,6 +11,8 @@ from testfixtures import compare, ShouldRaise
 
 from xlutils.view import View, Row, Col, CheckerView
 from xlutils.tests.fixtures import test_files
+from xlwt.compat import PY3
+
 
 class Check(object):
 
@@ -166,7 +168,33 @@ class CheckerViewTests(TestCase):
                 (u'More merged cells', 'XX')
                 )
 
-        compare(str(s.raised), expected='''\
+        if PY3:
+            expected="""\
+sequence not as expected:
+
+same:
+(('R0C0', 'R0C1'), ('R1C0', 'R1C1'), ('A merged cell', ''), ('', ''), ('', ''))
+
+expected:
+(('More merged cells', 'XX'),)
+
+actual:
+(('More merged cells', ''),)
+
+While comparing [5]: sequence not as expected:
+
+same:
+('More merged cells',)
+
+expected:
+('XX',)
+
+actual:
+('',)
+
+While comparing [5][1]: 'XX' (expected) != '' (actual)"""
+        else:
+            expected='''\
 sequence not as expected:
 
 same:
@@ -192,3 +220,5 @@ expected:
 
 actual:
 (u'',)''')
+
+        compare(expected, actual=str(s.raised))

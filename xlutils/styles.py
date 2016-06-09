@@ -4,6 +4,8 @@
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
 
+from .compat import xrange
+
 class NamedStyle:
     """
     An object with ``name`` and ``xf`` attributes representing

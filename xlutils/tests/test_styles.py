@@ -3,6 +3,7 @@
 # This Software is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license.html
 # See license.txt for more details.
+from collections import OrderedDict
 
 from mock import Mock
 from testfixtures import ShouldRaise
@@ -49,10 +50,10 @@ class TestStyles(TestCase):
             Styles(self.wb)
         
     def test_multiple_names_for_xfi_bad_2(self):
-        self.wb.style_name_map = {
-            'A':(0,0),
-            '':(0,0),
-            }
+        self.wb.style_name_map = OrderedDict((
+            ('A', (0,0)),
+            ('', (0,0)),
+        ))
         with ShouldRaise(AssertionError()):
             Styles(self.wb)
         

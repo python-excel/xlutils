@@ -8,6 +8,8 @@ from datetime import datetime, time
 from xlrd import open_workbook, XL_CELL_DATE, xldate_as_tuple
 from xlwt.Utils import col_by_name
 
+from .compat import xrange
+
 class Index(object):
     def __init__(self, name):
         self.name = name

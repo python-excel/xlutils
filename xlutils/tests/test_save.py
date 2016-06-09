@@ -6,9 +6,8 @@
 
 import os
 from mock import Mock
-from shutil import rmtree
-from StringIO import StringIO
-from tempfile import mkdtemp,TemporaryFile
+from ..compat import StringIO
+from tempfile import TemporaryFile
 from testfixtures import replace,tempdir
 from unittest import TestSuite,TestCase,makeSuite
 from xlutils.save import save
@@ -34,10 +33,9 @@ class TestSave(TestCase):
         w = args[1]
         self.failUnless(isinstance(w,StreamWriter))
         f = w.stream
-        self.failUnless(isinstance(f,file))
-        self.assertEqual(f.name,path)
-        self.assertEqual(f.mode,'wb')
-        self.assertEqual(f.closed,True)
+        self.assertEqual(f.name, path)
+        self.assertEqual(f.mode, 'wb')
+        self.assertEqual(f.closed, True)
         
     @replace('xlutils.save.process',Mock())
     def test_save_stringio(self,c):

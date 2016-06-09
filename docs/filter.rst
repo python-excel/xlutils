@@ -56,37 +56,38 @@ methods on the next filter.
 Here's an example filter that does nothing but print messages when its
 methods are called and then call the next filter in the chain:
 
+>>> from __future__ import print_function
 >>> class MyFilter:
 ...
 ...    def __init__(self,name):
 ...        self.name = name
 ... 
 ...    def start(self):
-...        print self.name,'start'
+...        print(self.name, 'start')
 ...        self.next.start()
 ...
 ...    def workbook(self,rdbook,wtbook_name):
-...        print self.name,'workbook',rdbook,wtbook_name
-...        self.next.workbook(rdbook,wtbook_name)
+...        print(self.name, 'workbook', rdbook, wtbook_name)
+...        self.next.workbook(rdbook, wtbook_name)
 ...    
 ...    def sheet(self,rdsheet,wtsheet_name):
-...        print self.name,'sheet',rdsheet,wtsheet_name
-...        self.next.sheet(rdsheet,wtsheet_name)
+...        print(self.name, 'sheet', rdsheet, wtsheet_name)
+...        self.next.sheet(rdsheet, wtsheet_name)
 ...        
 ...    def set_rdsheet(self,rdsheet):
-...        print self.name,'set_rdsheet',rdsheet
-...        self.next.sheet(rdsheet,wtsheet_name)
+...        print(self.name, 'set_rdsheet', rdsheet)
+...        self.next.sheet(rdsheet, wtsheet_name)
 ...        
 ...    def row(self,rdrowx,wtrowx):
-...        print self.name,'row',rdrowx,wtrowx
-...        self.next.row(rdrowx,wtrowx)
+...        print(self.name, 'row', rdrowx,wtrowx)
+...        self.next.row(rdrowx, wtrowx)
 ...
 ...    def cell(self,rdrowx,rdcolx,wtrowx,wtcolx):
-...        print self.name,'cell',rdrowx,rdcolx,wtrowx,wtcolx
-...        self.next.cell(rdrowx,rdcolx,wtrowx,wtcolx)
+...        print(self.name, 'cell', rdrowx, rdcolx, wtrowx, wtcolx)
+...        self.next.cell(rdrowx, rdcolx, wtrowx, wtcolx)
 ...
 ...    def finish(self):
-...        print self.name, 'finish'
+...        print(self.name, 'finish')
 ...        self.next.finish()
 
 For full details of when each of these methods are called, see the
@@ -237,12 +238,12 @@ directory specified:
 >>> os.listdir(temp_dir)
 []
 >>> f = w.get_stream('test.xls')
->>> f.write('some \r\n data')
+>>> _ = f.write(b'some \r\n data')
 >>> f.close()
 >>> os.listdir(temp_dir)
 ['test.xls']
 >>> open(os.path.join(temp_dir,'test.xls'),'rb').read()
-'some \r\n data'
+b'some \r\n data'
 
 StreamWriter
 ------------
@@ -264,10 +265,10 @@ The :meth:`~StreamWriter.get_stream` method makes sure the excel data is written
 the stream provided:
 
 >>> f = w.get_stream('test.xls')
->>> f.write('xls data')
->>> tf.seek(0)
+>>> _ = f.write(b'xls data')
+>>> _ = tf.seek(0)
 >>> tf.read()
-'xls data'
+b'xls data'
 
 .. note:: Only one file may be written to a :class:`StreamWriter`,
   further attempts will result in an exception being raised:
@@ -281,7 +282,7 @@ Exception: Attempt to write more than one workbook
 
 >>> tf = TemporaryFile()
 >>> process(TestReader(('Sheet1',[['R0C0']])),StreamWriter(tf))
->>> tf.seek(0)
+>>> _ = tf.seek(0)
 >>> len(tf.read())
 5632
 
@@ -373,11 +374,11 @@ When sheets are trimmed, a message is also logged to aid debugging:
 >>> from testfixtures import LogCapture
 >>> l = LogCapture()
 >>> process(r, ColumnTrimmer(), c)
->>> print l
+>>> print(l)
 xlutils.filter DEBUG
-  Number of columns trimmed from 3 to 2 for sheet 'Sheet1'
+  Number of columns trimmed from 3 to 2 for sheet b'Sheet1'
 xlutils.filter DEBUG
-  Number of columns trimmed from 3 to 1 for sheet 'Sheet3'
+  Number of columns trimmed from 3 to 1 for sheet b'Sheet3'
 
 The definition of 'no useful data' can also be controlled by passing
 in a function that returns ``True`` or ``False`` for each value:
@@ -444,7 +445,7 @@ passed on to the next filter:
 As well as the error message logged, we can also see the :class:`ErrorFilter`
 logs an error to that that the method calls have not been passed on:
 
->>> print h
+>>> print(h)
 theLogger ERROR
   a message
 xlutils.filter ERROR
@@ -456,7 +457,7 @@ instantiated:
 
 >>> f = ErrorFilter(message='wingnuts! errors have occurred!')
 >>> process(MyReader('test.xls'), Log(logging.ERROR), f, c)
->>> print h
+>>> print(h)
 theLogger ERROR
   a message
 xlutils.filter ERROR
@@ -481,9 +482,9 @@ also cause all methods to be filtered:
 >>> process(r,ErrorFilter(),c)
 >>> len(c.method_calls)
 0
->>> print h
+>>> print(h)
 xlutils.filter ERROR
-  Cell A1 of sheet 'Price(?)' contains a bad value: error (#NULL!)
+  Cell A1 of sheet b'Price(?)' contains a bad value: error (#NULL!)
 xlutils.filter ERROR
   No output as errors have occurred.
 

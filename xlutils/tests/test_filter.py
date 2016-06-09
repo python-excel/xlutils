@@ -7,7 +7,6 @@ from __future__ import with_statement
 # See license.txt for more details.
 
 from mock import Mock
-from StringIO import StringIO
 from tempfile import TemporaryFile
 from testfixtures import compare, Comparison as C, replace, log_capture, ShouldRaise, tempdir
 from unittest import TestSuite,TestCase,makeSuite
@@ -15,6 +14,8 @@ from xlrd import open_workbook, XL_CELL_NUMBER, XL_CELL_ERROR, XL_CELL_BOOLEAN
 from xlrd.formatting import XF
 from xlutils.filter import BaseReader,GlobReader,MethodFilter,BaseWriter,process,XLRDReader,XLWTWriter, BaseFilter
 from xlutils.tests.fixtures import test_files,test_xls_path,make_book,make_sheet,DummyBook
+from ..compat import StringIO, PY3
+from .compat import version_agnostic as va
 
 import os
 
@@ -248,7 +249,10 @@ class TestMethodFilter(TestCase):
         self.called = []
 
     def test_cmp(self):
-        cmp(MethodFilter(),OurMethodFilter([]))
+        if PY3:
+            MethodFilter() == OurMethodFilter([])
+        else:
+            cmp(MethodFilter(), OurMethodFilter([]))
         
     def do_calls_and_test(self,filter):
         filter.next = tf = Mock()
@@ -391,6 +395,7 @@ class TestMemoryLogger(TestCase):
     @replace('xlutils.filter.guppy',True)
     @replace('xlutils.filter.hpy',Mock(),strict=False)
     def test_method(self,hpy):
+        # XXX what are we logging?
         self.filter.method('name','foo',1)
         # hpy().heap().stat.dump('somepath')
         compare(hpy.call_args_list,[((),{})])
@@ -449,8 +454,12 @@ class TestErrorFilter(TestCase):
         f.finish()
         compare(c.method_calls,[])
         h.check(
-            ('xlutils.filter','ERROR',"Cell A1 of sheet 'Sheet2' contains a bad value: error (#NULL!)"),
-            ('xlutils.filter','ERROR','No output as errors have occurred.'),
+            ('xlutils.filter',
+             'ERROR',
+             va("Cell A1 of sheet b'Sheet2' contains a bad value: error (#NULL!)")),
+            ('xlutils.filter',
+             'ERROR',
+             'No output as errors have occurred.'),
             )
 
     @log_capture()
@@ -540,7 +549,7 @@ class TestErrorFilter(TestCase):
         f.temp_path = d.path
         f.prefix = 'junk'
         j = open(os.path.join(d.path,'junk.xls'),'wb')
-        j.write('junk')
+        j.write(b'junk')
         j.close()
 
         f.start()
@@ -698,8 +707,8 @@ class TestColumnTrimmer(TestCase):
         h.check((
             'xlutils.filter',
             'DEBUG',
-            "Number of columns trimmed from 2 to 1 for sheet 'new'"
-                ))
+            va("Number of columns trimmed from 2 to 1 for sheet b'new'")
+        ))
 
     @log_capture()
     def test_multiple_books(self,h):
@@ -1049,7 +1058,7 @@ class TestBaseWriter(TestCase):
         w = TestWriter()
         r(w)
         # check stuff on the writer
-        self.assertEqual(w.files.keys(),['testall.xls'])
+        compare(w.files.keys(), expected=['testall.xls'])
         self.failUnless('testall.xls' in w.closed)
         self.check_file(w,test_xls_path)
 
@@ -1083,7 +1092,7 @@ class TestBaseWriter(TestCase):
         w = TestWriter()
         r(w)
         # check stuff on the writer
-        self.assertEqual(w.files.keys(),['testnoformatting.xls'])
+        compare(w.files.keys(), expected=['testnoformatting.xls'])
         self.failUnless('testnoformatting.xls' in w.closed)
         self.check_file(w,test_xls_path,
                         l_a_xf_list=17,
@@ -1099,7 +1108,10 @@ class TestBaseWriter(TestCase):
         w = TestWriter()
         r(w)
         # check stuff on the writer
-        self.assertEqual(w.files.keys(),['test.xls','testnoformatting.xls','testall.xls'])
+        compare(
+            sorted(w.files.keys()),
+            expected=['test.xls', 'testall.xls', 'testnoformatting.xls']
+        )
         self.failUnless('test.xls' in w.closed)
         self.failUnless('testall.xls' in w.closed)
         self.failUnless('testnoformatting.xls' in w.closed)
@@ -1160,7 +1172,7 @@ class TestBaseWriter(TestCase):
         w.cell(1,0,3,0)
         w.finish()
         # check everything got written and closed
-        self.assertEqual(w.files.keys(),['new.xls'])
+        compare(w.files.keys(), expected=['new.xls'])
         self.failUnless('new.xls' in w.closed)
         # now check the cells written
         f = w.files['new.xls'].file
@@ -1202,7 +1214,7 @@ class TestBaseWriter(TestCase):
             )
         w = TestWriter()
         r(w)
-        self.assertEqual(w.files.keys(),['test.xls'])
+        compare(w.files.keys(), expected=['test.xls'])
         f = w.files['test.xls'].file
         a = open_workbook(file_contents=f.read(), formatting_info=1)
         self.assertEqual(a.sheet_names(),[name])
@@ -1226,7 +1238,7 @@ class TestBaseWriter(TestCase):
         w = TestWriter()
         r(w)
         
-        self.assertEqual(w.files.keys(),['test.xls'])
+        compare(w.files.keys(), expected=['test.xls'])
         f = w.files['test.xls'].file
         a = open_workbook(file_contents=f.read(),formatting_info=1)
         sheet = a.sheet_by_index(0)
@@ -1259,7 +1271,7 @@ class TestBaseWriter(TestCase):
         w = TestWriter()
         r(w)
         
-        self.assertEqual(w.files.keys(),['test.xls'])
+        compare(w.files.keys(), expected=['test.xls'])
         f = w.files['test.xls'].file
         a = open_workbook(file_contents=f.read(),formatting_info=1)
         sheet = a.sheet_by_index(0)
@@ -1286,7 +1298,7 @@ class TestBaseWriter(TestCase):
         w = TestWriter()
         r(w)
         
-        self.assertEqual(w.files.keys(),['test.xls'])
+        compare(w.files.keys(), expected=['test.xls'])
         f = w.files['test.xls'].file
         a = open_workbook(file_contents=f.read(),formatting_info=1)
         sheet = a.sheet_by_index(0)
@@ -1311,7 +1323,7 @@ class TestBaseWriter(TestCase):
             )
         w = TestWriter()
         r(w)
-        self.assertEqual(w.files.keys(),['test.xls'])
+        compare(w.files.keys(), expected=['test.xls'])
         a = open_workbook(file_contents=w.files['test.xls'].file.read())
         cell = a.sheet_by_index(0).cell(0,0)
         self.assertEqual(cell.ctype,XL_CELL_ERROR)
@@ -1323,7 +1335,7 @@ class TestBaseWriter(TestCase):
             )
         w = TestWriter()
         r(w)
-        self.assertEqual(w.files.keys(),['test.xls'])
+        compare(w.files.keys(), expected=['test.xls'])
         a = open_workbook(file_contents=w.files['test.xls'].file.read())
         cell = a.sheet_by_index(0).cell(0,0)
         self.assertEqual(cell.ctype,XL_CELL_BOOLEAN)
