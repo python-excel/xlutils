@@ -3,6 +3,10 @@ sudo: false
 
 language: python
 
+env:
+  - DEPS=git
+  - DEPS=pypi
+
 python:
   - "3.5"
   - "3.4"
@@ -12,8 +16,8 @@ python:
 
 # command to install dependencies
 install:
-  - pip install -U xlrd xlwt
-  - pip install -Ue .[test,build]
+  - sh -c "pip install -Ue .[test,build]"
+  - sh -c "if [ $DEPS = 'git' ]; then pip install -U git+https://github.com/python-excel/xlrd.git git+https://github.com/python-excel/xlwt.git; fi"
 
 # command to run tests, e.g. python setup.py test
 script: nosetests --with-cov --cov=xlutils
