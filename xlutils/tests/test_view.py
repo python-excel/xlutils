@@ -176,10 +176,10 @@ same:
  ('', ''),
  ('', ''))
 
-first:
+expected:
 ((u'More merged cells', 'XX'),)
 
-second:
+actual:
 ((u'More merged cells', u''),)
 
 While comparing [5]: sequence not as expected:
@@ -187,8 +187,8 @@ While comparing [5]: sequence not as expected:
 same:
 (u'More merged cells',)
 
-first:
+expected:
 ('XX',)
 
-second:
+actual:
 (u'',)''')

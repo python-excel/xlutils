@@ -139,7 +139,7 @@ class CheckSheet(SheetView):
 
         # late import in case testfixtures isn't around!
         from testfixtures import compare as _compare
-        _compare(expected, tuple(actual))
+        _compare(expected, actual=tuple(actual))
 
 class CheckerView(View):
     """

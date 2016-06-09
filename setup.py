@@ -46,7 +46,7 @@ setup(
             'nose-fixes',
             'nose-cov',
             'coveralls',
-            'testfixtures >= 1.6.1',
+            'testfixtures',
             'tox',
         ],
         build=[
