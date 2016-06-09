@@ -3,6 +3,22 @@ Changes
 
 .. currentmodule:: xlutils
 
+2.0.0 (9 June 2016)
+-------------------
+
+- Updated documentation.
+
+- Move to virtualenv/pip based development.
+
+- Move to Read The Docs for documentation.
+
+- Use Travis CI for testing and releases.
+
+- Use features of newer :mod:`testfixtures` in
+  :class:`~xlutils.view.CheckerView`.
+
+- Python 3 compatibility.
+
 1.7.1 (25 April 2014)
 ---------------------
 

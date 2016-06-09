@@ -33,6 +33,6 @@ deploy:
   on:
     tags: true
     repo: python-excel/xlutils
-    python: "2.7"
+    python: "3.5"
   skip_cleanup: true
   distributions: "sdist bdist_wheel"
