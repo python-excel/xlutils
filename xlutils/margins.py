@@ -119,7 +119,7 @@ def check_file(fname, verbose, do_punc=False, fmt_info=0, encoding='ascii', ones
         if (verbose
             or ngoodrows != sheet.nrows
             or ngoodcols != sheet.ncols
-            or (verbose >= 2 and ngoodcells and sheet_density_pct < 90.0)
+            or (verbose >= 2 and sheet_density_pct < 90.0)
             ):
             if oldncells:
                 pctwaste = (1.0 - float(newncells) / oldncells) * 100.0
