@@ -63,8 +63,8 @@ directory containg setup.py::
 Making a release
 ----------------
 
-To make a release, just update ``versions.txt``, update the change log, tag it
-and push to https://github.com/python-excel/xlutils
+To make a release, just update ``xlutils/version.txt``, update the change log,
+tag it and push to https://github.com/python-excel/xlutils
 and Travis CI should take care of the rest.
 
 Once the above is done, make sure to go to
