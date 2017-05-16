@@ -42,8 +42,3 @@ following package is installed:
 
 Since this is a soft dependency, it will not be installed by
 automatically by pip, easy_install or buildout.
-
-.. topic:: Python version requirements
-
-  This package is support on Python 2.5, 2.6 and 2.7 on Linux,
-  Mac OS X and Windows.
