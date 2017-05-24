@@ -20,6 +20,8 @@ files. Since these utilities may require either or both of the xlrd
 and xlwt packages, they are collected together here, separate from either
 package.
 
+Please read this before using this package: https://groups.google.com/d/msg/python-excel/P6TjJgFVjMI/g8d0eWxTBQAJ
+
 Currently available are:
 
 **xlutils.copy**
