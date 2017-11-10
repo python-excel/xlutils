@@ -4,7 +4,7 @@ xlutils.copy
 The function in this module copies :class:`xlrd.Book` objects into
 :class:`xlwt.Workbook` objects so they can be manipulated.
 You may wish to do this, for example, if you have an existing excel
-file where you want to change come cells. 
+file where you want to change some cells. 
 
 You would start by opening the file with :mod:`xlrd`:
 
