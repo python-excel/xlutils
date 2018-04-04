@@ -219,6 +219,8 @@ expected:
 ('XX',)
 
 actual:
-(u'',)'''
+(u'',)
+
+While comparing [5][1]: 'XX' (expected) != u'' (actual)'''
 
         compare(expected, actual=str(s.raised))
