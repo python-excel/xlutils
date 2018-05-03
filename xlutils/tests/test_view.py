@@ -11,7 +11,7 @@ from testfixtures import compare, ShouldRaise
 
 from xlutils.view import View, Row, Col, CheckerView
 from xlutils.tests.fixtures import test_files
-from xlwt.compat import PY3
+from .compat import PY3
 
 
 class Check(object):
